@@ -1,0 +1,40 @@
+<view class="page" wx:if="{{post}}">
+  <view class="card detail-card">
+    <view class="row">
+      <view class="title">{{post.title}}</view>
+      <view class="tag tag-{{post.type}}">{{post.tagName}}</view>
+    </view>
+
+    <view wx:if="{{post.images && post.images.length}}" class="image-strip">
+      <image
+        wx:for="{{post.images}}"
+        wx:key="*this"
+        src="{{item}}"
+        mode="aspectFill"
+        class="detail-image"
+      />
+    </view>
+
+    <view class="desc">{{post.description}}</view>
+
+    <view class="meta">
+      <text class="meta-item">{{post.location || (post.trainNo + ' · ' + post.carriageNo + '车厢')}}</text>
+      <text class="meta-item">{{post.createdAt}}</text>
+    </view>
+
+    <view class="publisher">
+      发布者：{{post.publisherName}} · 信用{{post.publisherCreditScore || 60}}分
+    </view>
+
+    <view wx:if="{{post.status === 'resolved'}}" class="resolved-banner">此求助已解决</view>
+
+    <view class="risk-tip">{{riskText}}</view>
+  </view>
+
+  <view class="action-area">
+    <button class="ghost-button" bindtap="goChat">{{contactText}}</button>
+    <button class="primary-button" bindtap="startOrder" wx:if="{{post.type !== 'topic'}}">{{actionText}}</button>
+  </view>
+
+  <button class="complaint" bindtap="goComplaint">举报此内容</button>
+</view>

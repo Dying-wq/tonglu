@@ -1,0 +1,26 @@
+<view class="page">
+  <view class="intro-card">
+    <view class="intro-title">举报与申诉</view>
+    <view class="intro-subtitle">举报理由分为四类。被3个不同用户举报且理由一致，系统自动临时封禁24小时。举报经核实属实，举报者信用分+3。</view>
+  </view>
+
+  <view class="section-title">举报原因</view>
+  <view class="reason-grid">
+    <view
+      wx:for="{{reasons}}"
+      wx:key="*this"
+      class="reason {{reason === item ? 'active' : ''}}"
+      data-reason="{{item}}"
+      bindtap="selectReason"
+    >
+      {{item}}
+    </view>
+  </view>
+
+  <view class="section-title">举报说明</view>
+  <textarea class="content-input" placeholder="请描述发生了什么，可说明时间、对方行为、是否有聊天记录佐证等。" value="{{content}}" bindinput="updateContent"></textarea>
+
+  <input class="target-input" placeholder="被举报用户ID（可选）" value="{{targetUserOpenid}}" bindinput="updateTarget" />
+
+  <button class="primary-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitComplaint">提交举报</button>
+</view>

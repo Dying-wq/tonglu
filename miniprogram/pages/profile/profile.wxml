@@ -1,0 +1,93 @@
+<view class="page">
+  <!-- 个人信息卡 -->
+  <view class="card profile-card" bindtap="goEditProfile">
+    <image wx:if="{{user.avatarUrl}}" class="avatar-image" src="{{user.avatarUrl}}" mode="aspectFill" />
+    <view wx:else class="avatar" style="background: {{user.themeColor || '#1f6feb'}};">{{user.avatarText}}</view>
+    <view class="profile-main">
+      <view class="nickname">{{user.nickname}}</view>
+      <view class="bio">{{user.signature || '点击编辑个人资料'}}</view>
+      <view class="credit-line">
+        <view class="credit-score" style="color: {{creditColor}};">信用分 {{user.creditScore || 60}}</view>
+        <view class="credit-level" style="color: {{creditColor}};">{{user.creditLevelName || '可信任旅客'}}</view>
+      </view>
+    </view>
+    <view class="edit-chip">编辑</view>
+  </view>
+
+  <!-- 统计数据 -->
+  <view class="stats-row">
+    <view class="stat-item">
+      <view class="stat-num">{{user.helpCount || 0}}</view>
+      <view class="stat-label">帮助次数</view>
+    </view>
+    <view class="stat-item">
+      <view class="stat-num">{{user.thankCount || 0}}</view>
+      <view class="stat-label">被感谢</view>
+    </view>
+    <view class="stat-item">
+      <view class="stat-num">{{user.topicCount || 0}}</view>
+      <view class="stat-label">话题打卡</view>
+    </view>
+  </view>
+
+  <!-- 徽章展示 -->
+  <view wx:if="{{earnedBadges.length > 0}}" class="card badge-card">
+    <view class="badge-title">我的徽章</view>
+    <view class="badge-list">
+      <view wx:for="{{earnedBadges}}" wx:key="key" class="badge-item">
+        <view class="badge-icon">{{item.icon === 'star' ? '★' : item.icon === 'medal' ? '🏅' : item.icon === 'crown' ? '👑' : '📷'}}</view>
+        <view class="badge-name">{{item.name}}</view>
+      </view>
+    </view>
+  </view>
+  <view wx:else class="card badge-card">
+    <view class="badge-title">我的徽章</view>
+    <view class="badge-empty">完成帮助或话题打卡即可获得徽章</view>
+  </view>
+
+  <!-- 消息提醒设置入口 -->
+  <view class="card notice-panel" bindtap="goNotificationSettings">
+    <view>
+      <view class="notice-title">消息提醒设置</view>
+      <view class="muted">回帖提醒 · 系统通知</view>
+    </view>
+    <view class="edit-chip">设置</view>
+  </view>
+
+  <!-- 菜单 -->
+  <view class="menu-grid">
+    <view
+      wx:for="{{menu}}"
+      wx:key="key"
+      class="menu-chip {{activePanelKey === item.key ? 'active' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="selectMenu"
+    >
+      {{item.title}}
+    </view>
+  </view>
+
+  <!-- 面板内容 -->
+  <view class="card panel-card">
+    <view class="panel-head">
+      <view class="panel-title">{{activePanel.title}}</view>
+      <button
+        wx:if="{{activePanelKey === 'rules' || activePanelKey === 'settings' || activePanelKey === 'thanks' || activePanelKey === 'reports'}}"
+        class="panel-action"
+        bindtap="openPanelAction"
+      >
+        进入
+      </button>
+    </view>
+
+    <view wx:if="{{activePanel.items.length === 0}}" class="empty-panel">{{activePanel.empty}}</view>
+
+    <view wx:for="{{activePanel.items}}" wx:key="id" class="panel-item">
+      <view class="panel-item-title">{{item.title}}</view>
+      <view class="panel-item-meta">{{item.meta}}</view>
+      <view class="panel-item-desc">{{item.desc}}</view>
+    </view>
+  </view>
+
+  <button wx:if="{{user.isAdmin}}" class="primary-button" bindtap="goAdmin">管理员入口</button>
+</view>

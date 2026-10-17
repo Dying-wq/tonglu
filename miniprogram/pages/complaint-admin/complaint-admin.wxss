@@ -1,0 +1,51 @@
+.empty-card,
+.complaint-card {
+  margin-bottom: 18rpx;
+  padding: 26rpx;
+  border: 1rpx solid #eef0f3;
+  border-radius: 8rpx;
+  background: #ffffff;
+}
+
+.reason-line {
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.content {
+  margin-top: 12rpx;
+  color: #4b5563;
+  font-size: 27rpx;
+  line-height: 1.55;
+}
+
+.meta {
+  margin-top: 14rpx;
+  color: #9ca3af;
+  font-size: 24rpx;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14rpx;
+  margin-top: 20rpx;
+}
+
+.actions button {
+  height: 72rpx;
+  margin: 0;
+  border-radius: 8rpx;
+  line-height: 72rpx;
+  font-size: 26rpx;
+}
+
+.reject {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.approve {
+  background: #111827;
+  color: #ffffff;
+}

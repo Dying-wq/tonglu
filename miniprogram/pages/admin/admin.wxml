@@ -1,0 +1,100 @@
+<view class="admin-page">
+  <view class="admin-hero">
+    <view>
+      <view class="eyebrow">同路·微光</view>
+      <view class="hero-title">管理后台</view>
+      <view class="hero-subtitle">查看用户、内容、订单、投诉与通知日志</view>
+    </view>
+    <button class="ghost-btn" bindtap="loadDashboard" loading="{{loading}}">刷新</button>
+  </view>
+
+  <view class="stats-grid">
+    <view class="stat-card">
+      <text class="stat-value">{{stats.users}}</text>
+      <text class="stat-label">用户</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-value">{{stats.posts}}</text>
+      <text class="stat-label">帖子</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-value">{{stats.openPosts}}</text>
+      <text class="stat-label">开放中</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-value">{{stats.orders}}</text>
+      <text class="stat-label">订单</text>
+    </view>
+    <view class="stat-card alert">
+      <text class="stat-value">{{stats.pendingReports}}</text>
+      <text class="stat-label">待审</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-value">{{stats.notifications}}</text>
+      <text class="stat-label">通知</text>
+    </view>
+  </view>
+
+  <view class="module-row">
+    <view
+      wx:for="{{modules}}"
+      wx:key="key"
+      class="module-chip {{activeKey === item.key ? 'active' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="selectModule"
+    >
+      {{item.title}}
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-head">
+      <view>
+        <view class="panel-title">{{activeModule.title}}管理</view>
+        <view class="panel-desc">{{activeModule.desc}}</view>
+      </view>
+      <button wx:if="{{activeModule.special === 'complaint'}}" class="small-btn" bindtap="goComplaintAdmin">仲裁台</button>
+    </view>
+
+    <view wx:if="{{records.length === 0}}" class="empty">{{emptyText}}</view>
+
+    <view wx:for="{{records}}" wx:key="id" class="record-card">
+      <view class="record-main">
+        <view class="avatar">{{item.avatarText}}</view>
+        <view class="record-body">
+          <view class="record-title">{{item.title}}</view>
+          <view class="record-subtitle">{{item.subtitle || '暂无关联信息'}}</view>
+          <view class="record-meta">{{item.createdAtText}}</view>
+        </view>
+      </view>
+      <view class="record-side">
+        <view class="status-pill">{{item.statusText}}</view>
+        <view wx:if="{{item.canSuspend}}" class="record-actions">
+          <button
+            class="mini-btn danger"
+            data-collection="{{item.collection}}"
+            data-id="{{item.id}}"
+            data-status="{{item.suspendStatus}}"
+            bindtap="updateStatus"
+          >
+            {{item.suspendText}}
+          </button>
+          <button
+            class="mini-btn"
+            data-collection="{{item.collection}}"
+            data-id="{{item.id}}"
+            data-status="{{item.restoreStatus}}"
+            bindtap="updateStatus"
+          >
+            恢复
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="action-bar">
+    <button class="action-btn primary" bindtap="goComplaintAdmin">投诉仲裁</button>
+    <button class="action-btn" bindtap="runRankCheck">月度信用检查</button>
+  </view>
+</view>

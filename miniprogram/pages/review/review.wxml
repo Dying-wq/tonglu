@@ -1,0 +1,17 @@
+<view class="page">
+  <view class="section-title">选择评价</view>
+  <view class="rating-row">
+    <button class="{{rating === 'good' ? 'active' : ''}}" data-rating="good" bindtap="selectRating">好评</button>
+    <button class="{{rating === 'normal' ? 'active' : ''}}" data-rating="normal" bindtap="selectRating">中评</button>
+    <button class="{{rating === 'bad' ? 'active' : ''}}" data-rating="bad" bindtap="selectRating">差评</button>
+  </view>
+
+  <view class="card score-card">
+    <view>完成订单：+{{score.completionScore}}</view>
+    <view>评价影响：{{score.reviewBonus}}</view>
+    <view class="total">本次合计：+{{score.total}}</view>
+  </view>
+
+  <textarea placeholder="写下评价内容" bindinput="updateContent" value="{{content}}"></textarea>
+  <button class="primary-button" bindtap="submitReview">提交评价</button>
+</view>

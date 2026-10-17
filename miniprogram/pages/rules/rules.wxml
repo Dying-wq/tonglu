@@ -1,0 +1,14 @@
+<view class="page rules-page">
+  <view class="hero">
+    <view class="hero-title">同路·微光 平台规则</view>
+    <view class="hero-subtitle">文明互助 · 理性求助 · 安全出行</view>
+  </view>
+
+  <view wx:for="{{rules}}" wx:key="title" class="rule-card">
+    <view class="rule-index">{{index + 1}}</view>
+    <view class="rule-main">
+      <view class="rule-title">{{item.title}}</view>
+      <view class="rule-text">{{item.text}}</view>
+    </view>
+  </view>
+</view>

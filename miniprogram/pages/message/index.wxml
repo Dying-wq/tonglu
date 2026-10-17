@@ -1,0 +1,42 @@
+<view class="page message-page">
+  <view class="message-head">
+    <view>
+      <view class="head-title">消息中心</view>
+      <view class="head-subtitle">未读 {{unreadCount}} 条 · 会话按最新消息排序</view>
+    </view>
+    <view class="setting-chip" bindtap="goSettings">提醒设置</view>
+  </view>
+
+  <scroll-view class="message-tabs" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="tab-track">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="*this"
+        data-index="{{index}}"
+        class="tab {{activeTab === index ? 'active' : ''}}"
+        bindtap="selectTab"
+      >
+        {{item}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view
+    wx:for="{{conversations}}"
+    wx:key="id"
+    class="conversation-card"
+    data-id="{{item.id}}"
+    bindtap="goChat"
+  >
+    <view class="avatar">{{item.avatarText}}</view>
+    <view class="content">
+      <view class="line">
+        <view class="name">{{item.name}} <text class="rank">{{item.rankName}}</text></view>
+        <view class="time">{{item.lastMessageAt || '刚刚'}}</view>
+      </view>
+      <view class="related">{{item.relatedTitle || '关联内容'}}</view>
+      <view class="last">{{item.lastMessage}}</view>
+    </view>
+    <view wx:if="{{item.unread}}" class="unread">{{item.unread}}</view>
+  </view>
+</view>

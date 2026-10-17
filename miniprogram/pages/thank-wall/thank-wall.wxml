@@ -1,0 +1,31 @@
+<view class="thank-wall-page">
+  <view class="wall-hero">
+    <view class="hero-icon">感</view>
+    <view class="hero-title">感谢墙</view>
+    <view class="hero-desc">每一份善意都值得被看见</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-tip">加载中...</view>
+
+  <view wx:elif="{{thankList.length === 0}}" class="empty-state">
+    <view class="empty-icon">空</view>
+    <view class="empty-text">暂无感谢记录</view>
+    <view class="empty-desc">帮助他人后，被感谢的内容会展示在这里</view>
+  </view>
+
+  <view wx:else class="thank-list">
+    <view wx:for="{{thankList}}" wx:key="id" class="thank-card">
+      <view class="thank-header">
+        <view class="thank-from">{{item.fromName}}</view>
+        <view class="thank-arrow">感谢</view>
+        <view class="thank-to">{{item.toName}}</view>
+      </view>
+      <view class="thank-content">{{item.content}}</view>
+      <view class="thank-time">{{item.createdAt}}</view>
+    </view>
+  </view>
+
+  <view class="wall-footer">
+    <view class="footer-text">仅展示最近10条公开感谢，昵称已匿名化处理</view>
+  </view>
+</view>

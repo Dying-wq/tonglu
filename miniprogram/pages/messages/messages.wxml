@@ -1,0 +1,33 @@
+<view class="page">
+  <scroll-view class="message-tabs" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="tab-track">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="*this"
+        data-index="{{index}}"
+        class="tab {{activeTab === index ? 'active' : ''}}"
+        bindtap="selectTab"
+      >
+        {{item}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view
+    wx:for="{{conversations}}"
+    wx:key="id"
+    class="card conversation"
+    data-id="{{item.id}}"
+    bindtap="goChat"
+  >
+    <view class="avatar">{{item.avatarText}}</view>
+    <view class="content">
+      <view class="row">
+        <view class="name">{{item.name}} <text class="rank">{{item.rankName}}</text></view>
+        <view class="time">{{item.lastMessageAt}}</view>
+      </view>
+      <view class="last">{{item.lastMessage}}</view>
+    </view>
+    <view wx:if="{{item.unread}}" class="unread">{{item.unread}}</view>
+  </view>
+</view>

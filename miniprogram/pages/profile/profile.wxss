@@ -1,0 +1,261 @@
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  min-width: 0;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 52rpx;
+  color: #ffffff;
+  text-align: center;
+  line-height: 104rpx;
+  font-size: 40rpx;
+  font-weight: 800;
+}
+
+.avatar-image {
+  flex: 0 0 auto;
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 52rpx;
+  background: #eef2f7;
+}
+
+.profile-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.nickname {
+  font-size: 34rpx;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.bio {
+  overflow: hidden;
+  margin-top: 8rpx;
+  color: #6b7280;
+  font-size: 25rpx;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.credit-line {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 10rpx;
+}
+
+.credit-score {
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.credit-level {
+  font-size: 24rpx;
+  font-weight: 700;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  background: #f0f7ff;
+}
+
+.edit-chip {
+  flex: 0 0 auto;
+  height: 52rpx;
+  padding: 0 18rpx;
+  border-radius: 26rpx;
+  background: #eff6ff;
+  color: #1d4ed8;
+  line-height: 52rpx;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+/* 统计数据行 */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14rpx;
+  margin: 22rpx 0;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 20rpx 0;
+  border-radius: 12rpx;
+  background: #ffffff;
+  border: 1rpx solid #e5e9f0;
+}
+
+.stat-num {
+  font-size: 40rpx;
+  font-weight: 900;
+  color: #1f6feb;
+}
+
+.stat-label {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #6b7280;
+}
+
+/* 徽章卡 */
+.badge-card {
+  margin-bottom: 22rpx;
+}
+
+.badge-title {
+  font-size: 28rpx;
+  font-weight: 900;
+  margin-bottom: 16rpx;
+}
+
+.badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  width: 140rpx;
+  padding: 16rpx 8rpx;
+  border-radius: 12rpx;
+  background: #f9fafb;
+  border: 1rpx solid #e5e9f0;
+}
+
+.badge-icon {
+  font-size: 40rpx;
+}
+
+.badge-name {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #374151;
+  text-align: center;
+}
+
+.badge-empty {
+  color: #9ca3af;
+  font-size: 24rpx;
+}
+
+/* 消息设置面板 */
+.notice-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 22rpx;
+}
+
+.notice-title {
+  margin-bottom: 8rpx;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+/* 菜单 */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10rpx;
+  margin: 0 0 22rpx;
+}
+
+.menu-chip {
+  min-width: 0;
+  height: 60rpx;
+  border: 1rpx solid #e5eaf0;
+  border-radius: 8rpx;
+  background: #ffffff;
+  color: #4b5563;
+  text-align: center;
+  line-height: 60rpx;
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.menu-chip.active {
+  border-color: #1f6feb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+/* 面板 */
+.panel-card {
+  margin-bottom: 24rpx;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
+}
+
+.panel-title {
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.panel-action {
+  flex: 0 0 96rpx;
+  width: 96rpx;
+  height: 50rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 8rpx;
+  background: #1f6feb;
+  color: #ffffff;
+  line-height: 50rpx;
+  font-size: 22rpx;
+}
+
+.empty-panel {
+  padding: 28rpx 0 8rpx;
+  color: #8a94a6;
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+
+.panel-item {
+  padding: 18rpx 0;
+  border-top: 1rpx solid #edf1f6;
+}
+
+.panel-item:first-of-type {
+  border-top: 0;
+}
+
+.panel-item-title {
+  color: #111827;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.panel-item-meta {
+  margin-top: 8rpx;
+  color: #1d4ed8;
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.panel-item-desc {
+  margin-top: 8rpx;
+  color: #6b7280;
+  font-size: 24rpx;
+  line-height: 1.45;
+}

@@ -1,0 +1,33 @@
+<view class="page chat-page">
+  <view class="card chat-header">
+    <view class="chat-title">同路私信</view>
+    <view class="muted">{{pollingText}}</view>
+    <view class="exchange">{{wechatExchangeStatus}}</view>
+  </view>
+
+  <view wx:if="{{post}}" class="linked-post">
+    <view class="linked-kicker">关联帖子</view>
+    <view class="linked-title">{{post.title}}</view>
+    <view class="linked-meta">{{post.location}} · {{post.publisherName}}</view>
+  </view>
+
+  <view class="messages">
+    <view
+      wx:for="{{messages}}"
+      wx:key="id"
+      class="bubble {{item.sender === 'me' ? 'mine' : 'other'}}"
+    >
+      <view>{{item.content}}</view>
+      <view class="time">{{item.createdAt}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{riskWarning}}" class="risk-tip">{{riskWarning}}</view>
+
+  <view class="composer">
+    <input placeholder="输入消息" value="{{inputValue}}" bindinput="updateInput" />
+    <button bindtap="sendMessage">发送</button>
+  </view>
+
+  <button class="ghost-button" bindtap="requestWechat">交换微信</button>
+</view>

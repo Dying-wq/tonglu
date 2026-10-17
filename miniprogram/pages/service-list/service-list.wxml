@@ -1,0 +1,23 @@
+<view class="page">
+  <view class="filter-row">
+    <view class="filter active">{{title}}</view>
+    <view class="filter">最新</view>
+    <view class="filter">信誉优先</view>
+  </view>
+
+  <view
+    wx:for="{{posts}}"
+    wx:key="id"
+    class="card list-card"
+    data-id="{{item.id}}"
+    bindtap="goDetail"
+  >
+    <view class="row">
+      <view class="title">{{item.title}}</view>
+      <view class="price">¥{{item.price}}</view>
+    </view>
+    <view class="desc">{{item.description}}</view>
+    <view class="meta">{{item.location}} · 发布者 {{item.publisherName}} · {{item.publisherRank}}</view>
+    <view class="tag">{{item.status === 'open' ? '可操作' : '已锁定'}}</view>
+  </view>
+</view>

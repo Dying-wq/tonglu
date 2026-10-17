@@ -1,0 +1,92 @@
+.message-tabs {
+  margin: 0 -28rpx 22rpx;
+}
+
+.tab-track {
+  display: flex;
+  gap: 12rpx;
+  min-width: max-content;
+  padding: 0 28rpx;
+}
+
+.tab {
+  flex: 0 0 auto;
+  height: 58rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid #e5eaf0;
+  border-radius: 29rpx;
+  background: #ffffff;
+  color: #4b5563;
+  line-height: 58rpx;
+  font-size: 25rpx;
+  font-weight: 800;
+}
+
+.tab.active {
+  border-color: #1f6feb;
+  background: #1f6feb;
+  color: #ffffff;
+}
+
+.conversation {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 18rpx;
+  min-width: 0;
+}
+
+.avatar {
+  width: 82rpx;
+  height: 82rpx;
+  border-radius: 8rpx;
+  background: #1f6feb;
+  color: #ffffff;
+  text-align: center;
+  line-height: 82rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  min-width: 0;
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.rank {
+  margin-left: 8rpx;
+  color: #1f6feb;
+  font-size: 24rpx;
+}
+
+.time,
+.last {
+  color: #94a3b8;
+  font-size: 24rpx;
+}
+
+.last {
+  margin-top: 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unread {
+  flex: 0 0 auto;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 18rpx;
+  background: #dc2626;
+  color: #ffffff;
+  text-align: center;
+  line-height: 36rpx;
+  font-size: 22rpx;
+}

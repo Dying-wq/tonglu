@@ -1,0 +1,57 @@
+.filter-row {
+  display: flex;
+  gap: 14rpx;
+  margin-bottom: 22rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.filter {
+  flex: 0 0 auto;
+  height: 58rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid #d8dee9;
+  border-radius: 8rpx;
+  background: #ffffff;
+  color: #64748b;
+  line-height: 58rpx;
+  font-size: 26rpx;
+}
+
+.filter.active {
+  border-color: #1f6feb;
+  color: #1f6feb;
+}
+
+.list-card {
+  margin-bottom: 18rpx;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: 32rpx;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.price {
+  flex: 0 0 auto;
+  color: #dc2626;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.desc {
+  margin: 12rpx 0;
+  color: #4b5563;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.meta {
+  margin-bottom: 14rpx;
+  color: #94a3b8;
+  font-size: 24rpx;
+  line-height: 1.4;
+}

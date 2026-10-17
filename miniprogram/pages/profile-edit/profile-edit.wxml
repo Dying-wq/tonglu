@@ -1,0 +1,41 @@
+<view class="page edit-page">
+  <view class="card avatar-card">
+    <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="chooseAvatar">
+      <image wx:if="{{form.avatarUrl}}" class="avatar-preview" src="{{form.avatarUrl}}" mode="aspectFill" />
+      <view wx:else class="avatar-fallback" style="background: {{form.themeColor}};">{{form.avatarText}}</view>
+    </button>
+    <view class="avatar-copy">
+      <view class="avatar-title">头像</view>
+      <view class="avatar-subtitle">点击头像自定义展示形象</view>
+    </view>
+  </view>
+
+  <view class="card form-card">
+    <view class="field">
+      <view class="label">昵称</view>
+      <input class="input" type="nickname" value="{{form.nickname}}" data-field="nickname" bindinput="updateField" placeholder="填写昵称" />
+    </view>
+    <view class="field">
+      <view class="label">个性签名</view>
+      <textarea class="textarea" value="{{form.signature}}" data-field="signature" bindinput="updateField" maxlength="30" placeholder="写一句话签名，如同路同行，微光互照" />
+    </view>
+  </view>
+
+  <view class="card theme-card">
+    <view class="label">主题色</view>
+    <view class="color-grid">
+      <view
+        wx:for="{{themeColors}}"
+        wx:key="key"
+        class="color-item {{form.themeColor === item.key ? 'active' : ''}}"
+        style="background: {{item.key}};"
+        data-color="{{item.key}}"
+        bindtap="selectTheme"
+      >
+        <view wx:if="{{form.themeColor === item.key}}" class="color-check">✓</view>
+      </view>
+    </view>
+  </view>
+
+  <button class="primary-button save-button" bindtap="saveProfile">保存资料</button>
+</view>

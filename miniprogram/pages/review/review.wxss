@@ -1,0 +1,45 @@
+.rating-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14rpx;
+}
+
+.rating-row button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 76rpx;
+  margin: 0;
+  padding: 0 12rpx;
+  border-radius: 8rpx;
+  background: #ffffff;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.rating-row button.active {
+  background: #1f6feb;
+  color: #ffffff;
+}
+
+.score-card {
+  margin: 24rpx 0;
+  font-size: 28rpx;
+  line-height: 1.8;
+}
+
+.total {
+  color: #1f6feb;
+  font-weight: 800;
+}
+
+textarea {
+  width: 100%;
+  min-height: 220rpx;
+  padding: 20rpx;
+  border: 1rpx solid #e5e9f0;
+  border-radius: 8rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+  line-height: 1.45;
+}

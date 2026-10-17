@@ -1,0 +1,158 @@
+.hot-page {
+  background: #f6f8fb;
+}
+
+.hot-hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 22rpx;
+  padding: 34rpx 30rpx;
+  border-radius: 8rpx;
+  background: #111827;
+  color: #ffffff;
+}
+
+.hot-kicker {
+  color: #93c5fd;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.hot-title {
+  margin-top: 10rpx;
+  font-size: 40rpx;
+  font-weight: 900;
+}
+
+.hot-subtitle {
+  margin-top: 10rpx;
+  color: #d1d5db;
+  font-size: 26rpx;
+  line-height: 1.4;
+}
+
+.join-button {
+  width: 172rpx;
+  height: 72rpx;
+  padding: 0;
+  border-radius: 8rpx;
+  background: #ffffff;
+  color: #111827;
+  line-height: 72rpx;
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.join-panel,
+.empty-card,
+.hot-card {
+  margin-top: 22rpx;
+  padding: 28rpx;
+  border: 1rpx solid #eef0f3;
+  border-radius: 8rpx;
+  background: #ffffff;
+}
+
+.panel-title {
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.panel-subtitle {
+  margin-top: 8rpx;
+  color: #6b7280;
+  font-size: 24rpx;
+  line-height: 1.4;
+}
+
+.own-post {
+  display: grid;
+  grid-template-columns: 1fr 152rpx;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 22rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid #f1f3f6;
+}
+
+.own-main {
+  min-width: 0;
+}
+
+.own-title {
+  overflow: hidden;
+  color: #111827;
+  font-size: 28rpx;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.own-meta {
+  margin-top: 8rpx;
+  color: #9ca3af;
+  font-size: 23rpx;
+}
+
+.mini-button {
+  width: 152rpx;
+  height: 58rpx;
+  padding: 0;
+  border-radius: 8rpx;
+  background: #2563eb;
+  color: #ffffff;
+  line-height: 58rpx;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.mini-button[disabled] {
+  background: #e5e7eb;
+  color: #9ca3af;
+}
+
+.empty-card {
+  color: #6b7280;
+  font-size: 27rpx;
+  line-height: 1.5;
+}
+
+.hot-card {
+  position: relative;
+}
+
+.hot-badge {
+  position: absolute;
+  top: 24rpx;
+  right: 24rpx;
+  height: 46rpx;
+  padding: 0 18rpx;
+  border-radius: 23rpx;
+  background: #eff6ff;
+  color: #1d4ed8;
+  line-height: 46rpx;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.hot-card-title {
+  padding-right: 150rpx;
+  color: #111827;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.hot-card-desc {
+  margin-top: 12rpx;
+  color: #4b5563;
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+.hot-meta {
+  margin-top: 18rpx;
+  color: #9ca3af;
+  font-size: 24rpx;
+}

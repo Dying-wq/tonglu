@@ -1,0 +1,59 @@
+<view class="page">
+  <!-- 车次信息展示 -->
+  <view wx:if="{{trainBinding}}" class="train-info-card">
+    <view class="train-badge">{{trainBinding.trainNo}}</view>
+    <view class="train-detail">{{trainBinding.carriageNo}}车厢{{trainBinding.seatNo ? ' · ' + trainBinding.seatNo + '座' : ''}}</view>
+    <view class="train-hint">信息将展示给同车旅客</view>
+  </view>
+  <view wx:else class="train-warning" bindtap="goTrainBinding">
+    <text>未绑定车次，点击前往绑定</text>
+  </view>
+
+  <view class="section-title">选择发布类型</view>
+  <view class="type-grid">
+    <view
+      wx:for="{{serviceTypes}}"
+      wx:key="key"
+      class="type-card {{selectedType === item.key ? 'active' : ''}}"
+      data-type="{{item.key}}"
+      bindtap="selectType"
+    >
+      <view class="type-icon" style="color: {{item.color}};">{{item.icon}}</view>
+      <view>{{item.name}}</view>
+    </view>
+  </view>
+
+  <view class="section-title">填写内容</view>
+  <view class="card form-card">
+    <input placeholder="标题（如：急需一片卫生巾）" value="{{form.title}}" data-field="title" bindinput="updateField" />
+    <input placeholder="车厢/座位号（选填，默认使用绑定信息）" value="{{form.location}}" data-field="location" bindinput="updateField" />
+    <textarea placeholder="详细说明（如：5车厢12A，谁有充电线能借十分钟？）" value="{{form.description}}" data-field="description" bindinput="updateField"></textarea>
+  </view>
+
+  <view wx:if="{{riskWarning}}" class="risk-warning">{{riskWarning}}</view>
+
+  <view wx:if="{{selectedType !== 'help'}}" class="section-title">上传图片（选填）</view>
+  <view wx:if="{{selectedType !== 'help'}}" class="card image-card">
+    <view class="image-grid">
+      <view wx:for="{{images}}" wx:key="*this" class="image-item">
+        <image src="{{item}}" mode="aspectFill" data-url="{{item}}" bindtap="previewImage" />
+        <view class="remove" data-index="{{index}}" bindtap="removeImage">×</view>
+      </view>
+      <view wx:if="{{images.length < 6}}" class="add-image" bindtap="chooseImages">
+        <view class="plus">+</view>
+        <view>添加图片</view>
+      </view>
+    </view>
+    <view class="image-tip">最多上传6张。请勿在图片中包含个人隐私信息。</view>
+  </view>
+
+  <view class="publish-tips">
+    <view class="tip-item">- 平台禁止金钱交易，建议物物交换或无偿帮助</view>
+    <view class="tip-item">- 仅同车次旅客可见你的发布</view>
+    <view class="tip-item" wx:if="{{selectedType === 'help'}}">- 求助者可开启回帖提醒（微信订阅消息）</view>
+  </view>
+
+  <button class="primary-button" loading="{{uploading}}" disabled="{{uploading}}" bindtap="submitPost">
+    {{uploading ? '发布中' : '发布'}}
+  </button>
+</view>

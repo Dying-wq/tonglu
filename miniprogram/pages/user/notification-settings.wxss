@@ -1,0 +1,103 @@
+.settings-page {
+  background: #f6f8fb;
+}
+
+.notice-card,
+.setting-row,
+.policy-card {
+  border: 1rpx solid #edf1f6;
+  border-radius: 8rpx;
+  background: #ffffff;
+}
+
+.notice-card {
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+}
+
+.notice-title {
+  color: #111827;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.notice-text {
+  margin-top: 10rpx;
+  color: #4b5563;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.subscribe-button {
+  height: 78rpx;
+  margin-top: 22rpx;
+  border-radius: 8rpx;
+  background: #1f6feb;
+  color: #ffffff;
+  line-height: 78rpx;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 14rpx;
+  padding: 24rpx;
+}
+
+.setting-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.setting-title {
+  color: #111827;
+  font-size: 29rpx;
+  font-weight: 900;
+}
+
+.setting-desc {
+  margin-top: 8rpx;
+  color: #6b7280;
+  font-size: 24rpx;
+  line-height: 1.4;
+}
+
+.switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 92rpx;
+  height: 52rpx;
+  border-radius: 26rpx;
+  background: #d1d5db;
+}
+
+.switch.on {
+  background: #1f6feb;
+}
+
+.switch-dot {
+  position: absolute;
+  left: 6rpx;
+  top: 6rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 20rpx;
+  background: #ffffff;
+  transition: transform 0.18s ease;
+}
+
+.switch.on .switch-dot {
+  transform: translateX(40rpx);
+}
+
+.policy-card {
+  padding: 22rpx;
+  color: #92400e;
+  background: #fffbeb;
+  font-size: 24rpx;
+  line-height: 1.5;
+}

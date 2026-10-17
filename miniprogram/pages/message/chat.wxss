@@ -1,0 +1,157 @@
+.chat-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 24rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: #f6f8fb;
+  box-sizing: border-box;
+}
+
+.linked-post {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 22rpx;
+  border: 1rpx solid #dbeafe;
+  border-radius: 8rpx;
+  background: #eff6ff;
+}
+
+.linked-kicker {
+  color: #1d4ed8;
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.linked-title {
+  margin-top: 8rpx;
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.linked-meta {
+  margin-top: 8rpx;
+  color: #64748b;
+  font-size: 23rpx;
+}
+
+.tool-row {
+  display: flex;
+  gap: 12rpx;
+  margin: 16rpx 0;
+}
+
+.tool-chip {
+  flex: 1;
+  height: 54rpx;
+  border-radius: 8rpx;
+  background: #ffffff;
+  color: #1d4ed8;
+  text-align: center;
+  line-height: 54rpx;
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.tool-chip.warn {
+  color: #b45309;
+}
+
+.tool-chip.dark {
+  color: #111827;
+}
+
+.messages {
+  flex: 1;
+  min-height: 420rpx;
+}
+
+.bubble {
+  max-width: 78%;
+  margin-bottom: 18rpx;
+  padding: 18rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.mine {
+  margin-left: auto;
+  background: #1f6feb;
+  color: #ffffff;
+}
+
+.other {
+  border: 1rpx solid #edf1f6;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.bubble-risk {
+  margin-top: 8rpx;
+  color: #fef3c7;
+  font-size: 22rpx;
+}
+
+.other .bubble-risk {
+  color: #b45309;
+}
+
+.time {
+  margin-top: 8rpx;
+  opacity: 0.72;
+  font-size: 22rpx;
+}
+
+.quick-row {
+  display: flex;
+  gap: 10rpx;
+  margin: 14rpx 0;
+  overflow-x: auto;
+}
+
+.quick-chip {
+  flex: 0 0 auto;
+  max-width: 360rpx;
+  height: 54rpx;
+  padding: 0 18rpx;
+  border: 1rpx solid #dbeafe;
+  border-radius: 27rpx;
+  background: #ffffff;
+  color: #1d4ed8;
+  line-height: 54rpx;
+  font-size: 23rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: 1fr 132rpx;
+  gap: 12rpx;
+}
+
+.composer input {
+  width: 100%;
+  height: 76rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid #d8dee9;
+  border-radius: 8rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.composer button {
+  width: 132rpx;
+  height: 76rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 8rpx;
+  background: #1f6feb;
+  color: #ffffff;
+  line-height: 76rpx;
+}

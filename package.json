@@ -1,0 +1,13 @@
+{
+  "name": "campus-mutual-aid-miniprogram",
+  "version": "0.1.0",
+  "private": true,
+  "description": "成理生活校园互助微信小程序",
+  "scripts": {
+    "test": "node --test",
+    "check:js": "node scripts/check-js.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,131 @@
+.thank-wall-page {
+  min-height: 100vh;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  background: #f5f7fb;
+}
+
+.wall-hero {
+  padding: 48rpx 36rpx 36rpx;
+  text-align: center;
+  background: linear-gradient(180deg, #fff9e6 0%, #f5f7fb 100%);
+}
+
+.hero-icon {
+  width: 100rpx;
+  height: 100rpx;
+  margin: 0 auto 16rpx;
+  border-radius: 50rpx;
+  background: linear-gradient(135deg, #f2994a, #f2c94c);
+  color: #ffffff;
+  line-height: 100rpx;
+  font-size: 36rpx;
+  font-weight: 900;
+  box-shadow: 0 12rpx 32rpx rgba(242, 153, 74, 0.3);
+}
+
+.hero-title {
+  font-size: 38rpx;
+  font-weight: 900;
+  color: #111827;
+}
+
+.hero-desc {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  color: #6b7280;
+}
+
+.loading-tip {
+  text-align: center;
+  padding: 60rpx 0;
+  color: #9ca3af;
+  font-size: 28rpx;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80rpx 0;
+}
+
+.empty-icon {
+  width: 80rpx;
+  height: 80rpx;
+  margin: 0 auto 16rpx;
+  border-radius: 40rpx;
+  background: #e5e9f0;
+  color: #9ca3af;
+  line-height: 80rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #374151;
+  font-weight: 600;
+}
+
+.empty-desc {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.thank-list {
+  padding: 0 24rpx;
+}
+
+.thank-card {
+  margin-bottom: 16rpx;
+  padding: 24rpx;
+  border-radius: 12rpx;
+  background: #ffffff;
+  border: 1rpx solid #edf1f6;
+  box-shadow: 0 4rpx 16rpx rgba(15, 23, 42, 0.04);
+}
+
+.thank-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.thank-from {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1f6feb;
+}
+
+.thank-arrow {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.thank-to {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #27AE60;
+}
+
+.thank-content {
+  font-size: 28rpx;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.thank-time {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: #9ca3af;
+}
+
+.wall-footer {
+  padding: 32rpx 24rpx;
+  text-align: center;
+}
+
+.footer-text {
+  font-size: 22rpx;
+  color: #9ca3af;
+}

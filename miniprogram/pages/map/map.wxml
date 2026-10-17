@@ -1,0 +1,59 @@
+<view class="map-page">
+  <view class="map-header">
+    <view class="map-title">校园 2.5D 地图</view>
+    <view class="map-subtitle">搜索地点，查看附近互助和相关入口</view>
+    <view class="search-box">
+      <text class="search-icon">⌕</text>
+      <input value="{{keyword}}" bindinput="updateKeyword" placeholder="搜索教学楼、宿舍、快递点" />
+    </view>
+  </view>
+
+  <scroll-view class="category-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="category-track">
+      <view
+        wx:for="{{categories}}"
+        wx:key="*this"
+        class="category-pill {{activeCategory === item ? 'active' : ''}}"
+        data-category="{{item}}"
+        bindtap="selectCategory"
+      >
+        {{item}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="campus-map">
+    <view class="map-ground"></view>
+    <view class="map-road road-main"></view>
+    <view class="map-road road-side"></view>
+    <view
+      wx:for="{{visiblePois}}"
+      wx:key="id"
+      class="poi-pin {{selectedPoi && selectedPoi.id === item.id ? 'active' : ''}}"
+      style="left: {{item.x}}%; top: {{item.y}}%;"
+      data-id="{{item.id}}"
+      bindtap="selectPoi"
+    >
+      <view class="poi-building"></view>
+      <view class="poi-name">{{item.name}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{selectedPoi}}" class="poi-card">
+    <view class="poi-card-top">
+      <view>
+        <view class="poi-title">{{selectedPoi.name}}</view>
+        <view class="poi-category">{{selectedPoi.category}}</view>
+      </view>
+      <view class="nav-button">导航</view>
+    </view>
+    <view class="poi-desc">{{selectedPoi.description}}</view>
+    <view class="tag-row">
+      <view wx:for="{{selectedPoi.tags}}" wx:key="*this" class="tag">{{item}}</view>
+    </view>
+    <view class="action-row">
+      <button class="ghost-button" bindtap="goNearby">附近互助</button>
+      <button class="primary-button" bindtap="goPublishLost">发布失物</button>
+    </view>
+  </view>
+</view>

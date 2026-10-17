@@ -1,0 +1,16 @@
+<view class="page">
+  <view class="card">
+    <view class="title">{{order.title}}</view>
+    <view class="status">状态：{{order.status}}</view>
+    <view class="muted">发布者：{{order.publisherName}}</view>
+    <view class="muted">接单者：{{order.takerName}}</view>
+    <view class="amount">金额/报酬：¥{{order.amount}}</view>
+    <view class="risk-tip">只有发布者确认完成后，订单才进入待评价。平台不托管资金，请保留沟通证据。</view>
+  </view>
+
+  <button class="ghost-button" bindtap="goChat">进入私聊</button>
+  <button class="primary-button" bindtap="publisherAccept">发布者接受接单</button>
+  <button class="primary-button" bindtap="confirmComplete">发布者确认完成</button>
+  <button class="ghost-button" bindtap="goReview">去评价</button>
+  <button class="ghost-button" bindtap="goComplaint">投诉仲裁</button>
+</view>

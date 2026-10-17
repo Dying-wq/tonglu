@@ -1,0 +1,68 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/thank-wall/thank-wall",
+    "pages/message/index",
+    "pages/message/chat",
+    "pages/train-binding/train-binding",
+    "pages/publish/publish",
+    "pages/profile/profile",
+    "pages/service-list/service-list",
+    "pages/service-detail/service-detail",
+    "pages/order-detail/order-detail",
+    "pages/review/review",
+    "pages/admin/admin",
+    "pages/profile-edit/profile-edit",
+    "pages/user/notification-settings",
+    "pages/search/search",
+    "pages/rules/rules",
+    "pages/complaint-submit/complaint-submit",
+    "pages/complaint-admin/complaint-admin"
+  ],
+  "window": {
+    "navigationBarTitleText": "同路·微光",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f5f7fb"
+  },
+  "tabBar": {
+    "color": "#7a8494",
+    "selectedColor": "#1f6feb",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "assets/tab/home.png",
+        "selectedIconPath": "assets/tab/home-active.png"
+      },
+      {
+        "pagePath": "pages/thank-wall/thank-wall",
+        "text": "感谢墙",
+        "iconPath": "assets/tab/hot.png",
+        "selectedIconPath": "assets/tab/hot-active.png"
+      },
+      {
+        "pagePath": "pages/publish/publish",
+        "text": "发布",
+        "iconPath": "assets/tab/publish.png",
+        "selectedIconPath": "assets/tab/publish-active.png"
+      },
+      {
+        "pagePath": "pages/message/index",
+        "text": "消息",
+        "iconPath": "assets/tab/messages.png",
+        "selectedIconPath": "assets/tab/messages-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/tab/profile.png",
+        "selectedIconPath": "assets/tab/profile-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

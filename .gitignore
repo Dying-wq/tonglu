@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+miniprogram_npm/
+cloudfunctions/**/node_modules/
+
+# WeChat developer local settings
+project.private.config.json
+
+# Runtime and temporary files
+work/
+dist/
+coverage/
+.cache/
+.tmp/
+*.log
+npm-debug.log*
+
+# Secrets and local environment
+.env
+.env.*
+*.local
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

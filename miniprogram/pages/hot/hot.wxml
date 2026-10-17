@@ -1,0 +1,55 @@
+<view class="page hot-page">
+  <view class="hot-hero">
+    <view>
+      <view class="hot-kicker">热门曝光</view>
+      <view class="hot-title">置顶 3 小时</view>
+      <view class="hot-subtitle">选择自己发布的合规内容，消耗 1 次热门机会。</view>
+    </view>
+    <button class="join-button" bindtap="toggleJoinPanel">加入热门</button>
+  </view>
+
+  <view wx:if="{{showJoinPanel}}" class="join-panel">
+    <view class="quota-row">
+      <view>
+        <view class="panel-title">我的热门次数</view>
+        <view class="panel-subtitle">剩余 {{hotQuota}} 次 · 审核中、已下架、已过期内容不可加入</view>
+      </view>
+    </view>
+
+    <view
+      wx:for="{{ownPosts}}"
+      wx:key="id"
+      class="own-post"
+    >
+      <view class="own-main">
+        <view class="own-title">{{item.title}}</view>
+        <view class="own-meta">{{item.tagName}} · {{item.status === 'open' ? '展示中' : '不可展示'}}</view>
+      </view>
+      <button
+        class="mini-button"
+        data-id="{{item.id}}"
+        disabled="{{item.isHot || hotQuota <= 0}}"
+        bindtap="joinHot"
+      >
+        {{item.isHot ? '热门中' : '加入热门'}}
+      </button>
+    </view>
+  </view>
+
+  <view wx:if="{{!promotions.length}}" class="empty-card">
+    暂无热门服务。点击“加入热门”，把自己的帖子置顶 3 小时。
+  </view>
+
+  <view
+    wx:for="{{promotions}}"
+    wx:key="id"
+    class="hot-card"
+    data-id="{{item.id}}"
+    bindtap="goDetail"
+  >
+    <view class="hot-badge">热门中</view>
+    <view class="hot-card-title">{{item.title}}</view>
+    <view class="hot-card-desc">{{item.description}}</view>
+    <view class="hot-meta">{{item.tagName}} · {{item.publisherName}} · {{item.publisherRank}}</view>
+  </view>
+</view>

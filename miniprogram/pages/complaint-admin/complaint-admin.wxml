@@ -1,0 +1,15 @@
+<view class="page">
+  <view class="section-title">待处理投诉</view>
+
+  <view wx:if="{{!complaints.length}}" class="empty-card">暂无待处理投诉</view>
+
+  <view wx:for="{{complaints}}" wx:key="_id" class="complaint-card">
+    <view class="reason-line">{{item.reason}}</view>
+    <view class="content">{{item.content}}</view>
+    <view class="meta">关联：{{item.relatedType}} / {{item.relatedId}}</view>
+    <view class="actions">
+      <button class="reject" data-id="{{item._id}}" bindtap="reject">驳回</button>
+      <button class="approve" data-id="{{item._id}}" bindtap="approve">成立并扣分</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,23 @@
+<view class="page search-page">
+  <view class="search-panel">
+    <view class="search-icon">⌕</view>
+    <input focus value="{{keyword}}" bindinput="updateKeyword" placeholder="搜索求助、帮助、话题" />
+  </view>
+
+  <view class="result-count">找到 {{results.length}} 条相关内容</view>
+
+  <view
+    wx:for="{{results}}"
+    wx:key="id"
+    class="result-card"
+    data-id="{{item.id}}"
+    bindtap="goDetail"
+  >
+    <view class="result-top">
+      <view class="result-title">{{item.title}}</view>
+      <view class="result-tag">{{item.tagName || '互助'}}</view>
+    </view>
+    <view class="result-desc">{{item.description}}</view>
+    <view class="result-meta">{{item.location}} · {{item.publisherName}} · {{item.publisherRank}}</view>
+  </view>
+</view>

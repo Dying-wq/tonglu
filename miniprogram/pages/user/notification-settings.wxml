@@ -1,0 +1,25 @@
+<view class="page settings-page">
+  <view class="notice-card">
+    <view class="notice-title">微信服务通知</view>
+    <view class="notice-text">{{statusText}}</view>
+    <button class="subscribe-button" bindtap="requestAllSubscribe">开启微信服务通知</button>
+  </view>
+
+  <view
+    wx:for="{{settingItems}}"
+    wx:key="key"
+    class="setting-row"
+    data-key="{{item.key}}"
+    bindtap="toggleSetting"
+  >
+    <view class="setting-copy">
+      <view class="setting-title">{{item.title}}</view>
+      <view class="setting-desc">{{item.desc}}</view>
+    </view>
+    <view class="switch {{item.enabled ? 'on' : ''}}">
+      <view class="switch-dot"></view>
+    </view>
+  </view>
+
+  <view class="policy-card">订阅消息仅用于服务通知，不用于营销广告。未授权时只显示小程序内红点。</view>
+</view>

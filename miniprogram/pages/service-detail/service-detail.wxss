@@ -1,0 +1,98 @@
+.detail-card {
+  margin-bottom: 24rpx;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: 38rpx;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.tag {
+  flex: 0 0 auto;
+  height: 42rpx;
+  padding: 0 16rpx;
+  border-radius: 21rpx;
+  line-height: 42rpx;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.tag-help {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.tag-offer {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.tag-topic {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.image-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+  margin-top: 22rpx;
+}
+
+.detail-image {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8rpx;
+  background: #f1f5f9;
+}
+
+.desc {
+  margin-top: 24rpx;
+  color: #374151;
+  font-size: 28rpx;
+  line-height: 1.7;
+}
+
+.meta,
+.publisher {
+  margin-top: 16rpx;
+  color: #64748b;
+  font-size: 26rpx;
+}
+
+.meta-item {
+  margin-right: 20rpx;
+}
+
+.resolved-banner {
+  margin-top: 16rpx;
+  padding: 12rpx 18rpx;
+  border-radius: 8rpx;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 26rpx;
+  font-weight: 700;
+  text-align: center;
+}
+
+.action-area {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18rpx;
+}
+
+.complaint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 24rpx;
+  padding: 0;
+  background: transparent;
+  color: #6b7280;
+  font-size: 26rpx;
+  line-height: 1.2;
+}

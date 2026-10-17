@@ -1,0 +1,118 @@
+<view class="home-page">
+  <!-- 首页头部 -->
+  <view class="circle-hero" style="padding-top: {{headerTop + 14}}px">
+    <view class="hero-bg"></view>
+    <view class="hero-mask"></view>
+
+    <view class="circle-info">
+      <view class="app-logo">微</view>
+      <view class="circle-copy">
+        <view class="title-line">
+          <view class="circle-title">同路·微光</view>
+        </view>
+        <view class="circle-members">铁路旅客互助平台 · 同路同行 · 微光互照</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 车次绑定状态条 -->
+  <view class="train-bar" bindtap="goTrainBinding">
+    <view wx:if="{{trainBinding}}" class="train-bound">
+      <view class="train-icon">车</view>
+      <view class="train-info">
+        <view class="train-no">{{trainBinding.trainNo}} · {{trainBinding.carriageNo}}车厢</view>
+        <view class="train-status">已绑定 · 点击修改或解除</view>
+      </view>
+      <view class="train-arrow">›</view>
+    </view>
+    <view wx:else class="train-unbound">
+      <view class="train-icon unbound">+</view>
+      <view class="train-info">
+        <view class="train-no">点击绑定车次</view>
+        <view class="train-status">绑定后可看到同车旅客的互助信息</view>
+      </view>
+      <view class="train-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- 防骗提醒 -->
+  <view class="notice-row">
+    <view class="notice-label">提醒</view>
+    <view class="notice-text">{{noticeText}}</view>
+  </view>
+
+  <!-- 筛选标签 -->
+  <view class="feature-grid">
+    <view
+      class="feature-tile {{activeFilter === '' ? 'active' : ''}}"
+      bindtap="clearFilter"
+    >
+      <view class="feature-name">全部</view>
+    </view>
+    <view
+      wx:for="{{featureTiles}}"
+      wx:key="key"
+      class="feature-tile {{activeFilter === item.type ? 'active' : ''}}"
+      data-item="{{item}}"
+      bindtap="selectFilter"
+    >
+      <view class="feature-name">{{item.name}}</view>
+    </view>
+  </view>
+
+  <!-- 规则提示 -->
+  <view class="rule-chip" bindtap="goRules">
+    <text class="rule-strong">规则</text>
+    <text class="rule-text">禁止金钱交易 · 物物交换或无偿帮助 · 可举报仲裁</text>
+  </view>
+
+  <!-- 信息流 -->
+  <view class="feed-list">
+    <view
+      wx:for="{{feedPosts}}"
+      wx:key="id"
+      class="post-card {{item.status === 'resolved' ? 'resolved' : ''}}"
+      style="background: {{item.urgencyColor || '#ffffff'}};"
+      data-id="{{item.id}}"
+      bindtap="goDetail"
+    >
+      <view class="post-head">
+        <view class="post-author">
+          {{item.publisherName}} · 信用{{item.publisherCreditScore || 60}}分
+        </view>
+        <view class="post-tag tag-{{item.type}}">{{item.tagName}}</view>
+      </view>
+      <view class="post-title">{{item.title}}</view>
+      <view class="post-desc">{{item.description}}</view>
+      <view class="post-meta">
+        {{item.location}} · {{item.createdAt}}
+        <text wx:if="{{item.status === 'resolved'}}" class="resolved-tag">已解决</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{feedPosts.length === 0}}" class="empty-feed">
+    <view class="empty-text">暂无互助信息</view>
+    <view class="empty-desc">{{trainBinding ? '同车次暂无帖子，来发布第一条吧' : '请先绑定车次查看同车信息'}}</view>
+  </view>
+
+  <!-- 底部搜索 -->
+  <view class="bottom-search" bindtap="goSearch">
+    <view class="search-icon">⌕</view>
+    <view class="search-placeholder">搜索求助、帮助、话题</view>
+  </view>
+
+  <!-- 首次使用隐私提示弹窗 -->
+  <view wx:if="{{showPrivacyNotice}}" class="privacy-mask">
+    <view class="privacy-modal">
+      <view class="privacy-title">使用须知</view>
+      <view class="privacy-content">
+        <view class="privacy-item">1. 本平台禁止任何形式的金钱交易，建议物物交换或无偿帮助。</view>
+        <view class="privacy-item">2. 用户间只能通过小程序内私信沟通，不显示手机号、微信号。</view>
+        <view class="privacy-item">3. 私信文字内容仅保留7天，不存储图片。</view>
+        <view class="privacy-item">4. 请遵守平台规则，文明互助，理性求助。</view>
+      </view>
+      <button class="primary-button" bindtap="closePrivacyNotice">我知道了</button>
+    </view>
+  </view>
+</view>

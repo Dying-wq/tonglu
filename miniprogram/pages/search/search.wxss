@@ -1,0 +1,79 @@
+.search-page {
+  background: #f6f8fb;
+}
+
+.search-panel {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  height: 82rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid #e5eaf0;
+  border-radius: 8rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.search-icon {
+  color: #1f6feb;
+  font-size: 32rpx;
+}
+
+.search-panel input {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.result-count {
+  margin: 24rpx 0 16rpx;
+  color: #6b7280;
+  font-size: 24rpx;
+}
+
+.result-card {
+  margin-bottom: 16rpx;
+  padding: 24rpx;
+  border: 1rpx solid #edf1f6;
+  border-radius: 8rpx;
+  background: #ffffff;
+}
+
+.result-top {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.result-title {
+  flex: 1;
+  min-width: 0;
+  color: #111827;
+  font-size: 32rpx;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.result-tag {
+  flex: 0 0 auto;
+  height: 42rpx;
+  padding: 0 16rpx;
+  border-radius: 21rpx;
+  background: #eff6ff;
+  color: #1d4ed8;
+  line-height: 42rpx;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.result-desc {
+  margin-top: 12rpx;
+  color: #374151;
+  font-size: 27rpx;
+  line-height: 1.5;
+}
+
+.result-meta {
+  margin-top: 14rpx;
+  color: #9ca3af;
+  font-size: 23rpx;
+}

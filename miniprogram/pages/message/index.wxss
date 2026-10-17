@@ -1,0 +1,155 @@
+.message-page {
+  background: #f6f8fb;
+}
+
+.message-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-bottom: 22rpx;
+  padding: 28rpx;
+  border-radius: 8rpx;
+  background: #111827;
+  color: #ffffff;
+}
+
+.head-title {
+  font-size: 38rpx;
+  font-weight: 900;
+}
+
+.head-subtitle {
+  margin-top: 8rpx;
+  color: #d1d5db;
+  font-size: 24rpx;
+}
+
+.setting-chip {
+  flex: 0 0 auto;
+  height: 58rpx;
+  padding: 0 18rpx;
+  border-radius: 29rpx;
+  background: #ffffff;
+  color: #111827;
+  line-height: 58rpx;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.message-tabs {
+  margin: 0 -28rpx 22rpx;
+}
+
+.tab-track {
+  display: flex;
+  gap: 12rpx;
+  min-width: max-content;
+  padding: 0 28rpx;
+}
+
+.tab {
+  flex: 0 0 auto;
+  height: 58rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid #e5eaf0;
+  border-radius: 29rpx;
+  background: #ffffff;
+  color: #4b5563;
+  line-height: 58rpx;
+  font-size: 25rpx;
+  font-weight: 800;
+}
+
+.tab.active {
+  border-color: #1f6feb;
+  background: #1f6feb;
+  color: #ffffff;
+}
+
+.conversation-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  min-width: 0;
+  margin-bottom: 18rpx;
+  padding: 24rpx;
+  border: 1rpx solid #edf1f6;
+  border-radius: 8rpx;
+  background: #ffffff;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 82rpx;
+  height: 82rpx;
+  border-radius: 8rpx;
+  background: #1f6feb;
+  color: #ffffff;
+  text-align: center;
+  line-height: 82rpx;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank {
+  margin-left: 8rpx;
+  color: #1f6feb;
+  font-size: 23rpx;
+}
+
+.time,
+.last,
+.related {
+  color: #94a3b8;
+  font-size: 24rpx;
+}
+
+.related {
+  margin-top: 8rpx;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.last {
+  margin-top: 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unread {
+  flex: 0 0 auto;
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 8rpx;
+  border-radius: 18rpx;
+  background: #dc2626;
+  color: #ffffff;
+  text-align: center;
+  line-height: 36rpx;
+  font-size: 22rpx;
+  box-sizing: border-box;
+}

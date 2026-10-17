@@ -1,0 +1,44 @@
+<view class="chat-page">
+  <view class="linked-post" bindtap="goPost">
+    <view class="linked-kicker">关联内容</view>
+    <view class="linked-title">{{post ? post.title : '同路微光会话'}}</view>
+    <view class="linked-meta">{{post ? post.location + ' · ' + post.publisherName : pollingText}}</view>
+  </view>
+
+  <view class="tool-row">
+    <view class="tool-chip" bindtap="requestWechat">交换微信</view>
+    <view class="tool-chip warn" bindtap="reportConversation">举报</view>
+    <view class="tool-chip dark" bindtap="blockUser">拉黑</view>
+  </view>
+
+  <scroll-view class="messages" scroll-y>
+    <view
+      wx:for="{{messages}}"
+      wx:key="id"
+      class="bubble {{item.sender === 'me' ? 'mine' : 'other'}}"
+    >
+      <view>{{item.content}}</view>
+      <view wx:if="{{item.riskStatus === 'warning'}}" class="bubble-risk">风险提醒</view>
+      <view class="time">{{item.createdAt || '刚刚'}}</view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{riskWarning}}" class="risk-tip">{{riskWarning}}</view>
+
+  <view class="quick-row">
+    <view
+      wx:for="{{quickReplies}}"
+      wx:key="*this"
+      class="quick-chip"
+      data-text="{{item}}"
+      bindtap="useQuickReply"
+    >
+      {{item}}
+    </view>
+  </view>
+
+  <view class="composer">
+    <input placeholder="输入消息" value="{{inputValue}}" bindinput="updateInput" />
+    <button bindtap="sendText">发送</button>
+  </view>
+</view>

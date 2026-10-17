@@ -1,0 +1,113 @@
+.chat-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  margin-bottom: 20rpx;
+  font-size: 26rpx;
+}
+
+.chat-title {
+  color: #111827;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.exchange {
+  margin-top: 10rpx;
+  color: #1f6feb;
+}
+
+.linked-post {
+  margin-bottom: 20rpx;
+  padding: 22rpx;
+  border: 1rpx solid #dbeafe;
+  border-radius: 8rpx;
+  background: #eff6ff;
+}
+
+.linked-kicker {
+  color: #1d4ed8;
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.linked-title {
+  margin-top: 8rpx;
+  color: #111827;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.linked-meta {
+  margin-top: 8rpx;
+  color: #64748b;
+  font-size: 23rpx;
+}
+
+.messages {
+  flex: 1;
+  min-height: 420rpx;
+  padding-bottom: 10rpx;
+}
+
+.bubble {
+  max-width: 78%;
+  word-break: break-word;
+  margin-bottom: 18rpx;
+  padding: 18rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+.mine {
+  margin-left: auto;
+  background: #1f6feb;
+  color: #ffffff;
+}
+
+.other {
+  background: #ffffff;
+  color: #1f2937;
+  border: 1rpx solid #edf1f6;
+}
+
+.time {
+  margin-top: 8rpx;
+  opacity: 0.72;
+  font-size: 22rpx;
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: 1fr 132rpx;
+  gap: 12rpx;
+  margin: 18rpx 0;
+}
+
+.composer input {
+  width: 100%;
+  height: 76rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid #d8dee9;
+  border-radius: 8rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.composer button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 132rpx;
+  height: 76rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 8rpx;
+  background: #1f6feb;
+  color: #ffffff;
+  line-height: 1.2;
+}
