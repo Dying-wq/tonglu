@@ -1,6 +1,7 @@
 const { serviceTypes, posts } = require('../../utils/mock-data');
 const { getPosts } = require('../../utils/cloud-api');
 const { sortPostsByStatus, getUrgencyInfo } = require('../../utils/order-flow');
+const { calcRemainingRatio } = require('../../utils/train');
 
 const featureTiles = [
   { key: 'help', name: '求助', type: 'help' },
@@ -89,9 +90,9 @@ Page({
     // 云开发就绪时以云端结果为准：空列表就是空列表，不能回退到演示数据
     const allPosts = cloudReady ? (nextPosts || []) : posts;
 
-    // 计算紧急程度颜色
+    // 计算紧急程度颜色：按「绑定时长 + 到达时间」实时算剩余车程，不再用写死的静态比例
     const binding = app && app.globalData.trainBinding;
-    const remainingRatio = binding ? binding.remainingRatio : 1;
+    const remainingRatio = binding ? calcRemainingRatio(binding) : 1;
 
     const enrichedPosts = allPosts.map((post) => {
       if (post.urgencyColor) return post; // 已有颜色

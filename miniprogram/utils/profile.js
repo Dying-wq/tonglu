@@ -1,17 +1,54 @@
-function buildProfilePanels({ posts = [], orders = [], user = {} } = {}) {
-  const ownPosts = posts.slice(0, 5).map((post) => ({
-    id: post.id || post._id,
-    title: post.title || '未命名帖子',
-    meta: `${post.tagName || post.type || '互助'} · ${post.status || 'open'} · 浏览${post.views || 0}`,
-    desc: post.description || post.location || '暂无说明'
-  }));
+const { getOrderStatusLabel, getPostStatusLabel, normalizePostStatus } = require('./order-flow');
+const { POST_STATUS } = require('./constants');
 
-  const ownOrders = orders.slice(0, 5).map((order) => ({
-    id: order.id || order._id,
-    title: order.title || '未命名记录',
-    meta: `${order.status || 'pending'}`,
-    desc: `求助者：${order.publisherName || '旅客'} · 帮助者：${order.takerName || '旅客'}`
-  }));
+function pad2(value) {
+  return String(value).padStart(2, '0');
+}
+
+// createdAt 可能是 Date、时间戳或云数据库 serverDate 序列化后的日期字符串
+function formatCreatedAt(value) {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  const ts = date.getTime();
+  if (!Number.isFinite(ts)) return '';
+  return `${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+// 判断这条订单里我是发起求助的一方，还是接单帮助的一方
+function getOrderRoleLabel(order, openid) {
+  if (!openid) return '我参与的';
+  if (order.publisherOpenid && order.publisherOpenid === openid) return '我发布的';
+  if (order.takerOpenid && order.takerOpenid === openid) return '我接的单';
+  return '我参与的';
+}
+
+function buildProfilePanels({ posts = [], orders = [], user = {} } = {}) {
+  const ownPosts = posts.slice(0, 5).map((post) => {
+    const status = normalizePostStatus(post.status) || POST_STATUS.OPEN;
+    return {
+      id: post.id || post._id,
+      title: post.title || '未命名帖子',
+      meta: `${post.tagName || post.type || '互助'} · ${getPostStatusLabel(status)} · 浏览${post.views || 0}`,
+      desc: post.description || post.location || '暂无说明'
+    };
+  });
+
+  // 「我的参与」用真实订单数据：状态文案取 order-flow 的映射，角色按 openid 判断
+  const ownOrders = orders.slice(0, 5).map((order) => {
+    const statusLabel = getOrderStatusLabel(order.status);
+    const roleLabel = getOrderRoleLabel(order, user.openid);
+    const timeText = formatCreatedAt(order.createdAt);
+    return {
+      id: order.id || order._id,
+      title: order.title || '未命名记录',
+      meta: `${statusLabel} · ${roleLabel}`,
+      desc: [
+        `求助者：${order.publisherName || '同车旅客'}`,
+        `帮助者：${order.takerName || '同车旅客'}`,
+        timeText
+      ].filter(Boolean).join(' · ')
+    };
+  });
 
   return {
     posts: {

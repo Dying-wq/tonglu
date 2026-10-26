@@ -114,6 +114,47 @@
   box-sizing: border-box;
 }
 
+/* 到达时间选择：日期 + 时间 并排 */
+.arrival-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.arrival-row picker {
+  flex: 1;
+}
+
+.arrival-picker {
+  height: 80rpx;
+  line-height: 80rpx;
+  padding: 0 24rpx;
+  border-radius: 8rpx;
+  border: 1rpx solid #d8dee9;
+  background: #f9fafb;
+  font-size: 28rpx;
+  color: #111827;
+  text-align: center;
+}
+
+.arrival-picker.placeholder {
+  color: #9aa4b2;
+}
+
+.arrival-clear {
+  flex: none;
+  font-size: 26rpx;
+  color: #1f6feb;
+  padding: 0 8rpx;
+}
+
+.form-hint {
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: #8a94a6;
+  line-height: 1.6;
+}
+
 .tips-section {
   margin: 0 28rpx 28rpx;
   padding: 24rpx 28rpx;

@@ -1,5 +1,5 @@
-const { currentUser, demoOrder } = require('../../utils/mock-data');
-const { login, getMyPosts } = require('../../utils/cloud-api');
+const { currentUser } = require('../../utils/mock-data');
+const { login, getMyPosts, getMyOrders } = require('../../utils/cloud-api');
 const { buildProfilePanels } = require('../../utils/profile');
 const { getEarnedBadges, getCreditLevelName, getCreditBadgeColor } = require('../../utils/rank');
 
@@ -14,11 +14,12 @@ const menu = [
   { key: 'settings', title: '设置' }
 ];
 
-function buildPanels(user, myPosts) {
+function buildPanels(user, myPosts, myOrders) {
   return buildProfilePanels({
     user,
     posts: myPosts || [],
-    orders: [demoOrder]
+    // 真实订单数据，不再用 mock-data 的演示订单
+    orders: myOrders || []
   });
 }
 
@@ -27,9 +28,10 @@ Page({
     user: currentUser,
     menu,
     activePanelKey: 'posts',
-    activePanel: buildPanels(currentUser, []).posts,
-    panels: buildPanels(currentUser, []),
+    activePanel: buildPanels(currentUser, [], []).posts,
+    panels: buildPanels(currentUser, [], []),
     myPosts: [],
+    myOrders: [],
     creditColor: '#27AE60',
     earnedBadges: []
   },
@@ -46,6 +48,20 @@ Page({
         ...savedProfile
       });
     }
+    // 从订单详情页返回时刷新「我的参与」，30 秒内不重复请求（避免频繁切页打爆云函数）
+    this.refreshMyData();
+  },
+
+  async refreshMyData() {
+    const app = getApp();
+    const openid = app && app.globalData ? app.globalData.openid : '';
+    if (!openid) return;
+    const now = Date.now();
+    if (this.lastRefreshAt && now - this.lastRefreshAt < 30 * 1000) return;
+    this.lastRefreshAt = now;
+
+    const [myPosts, myOrders] = await Promise.all([getMyPosts(), getMyOrders()]);
+    this.applyUser(this.data.user, myPosts, myOrders);
   },
 
   async initUser() {
@@ -53,14 +69,19 @@ Page({
     const user = result && result.user
       ? { ...this.data.user, ...result.user }
       : this.data.user;
-    // 登录成功后再拉取本人发布的帖子，替换掉写死的演示数据
+    // 登录成功后再拉取本人发布的帖子和参与的订单，替换掉写死的演示数据
     const myPosts = await getMyPosts();
-    this.applyUser(user, myPosts);
+    const myOrders = await getMyOrders();
+    this.applyUser(user, myPosts, myOrders);
   },
 
-  applyUser(user, myPosts) {
+  applyUser(user, myPosts, myOrders) {
     const posts = Array.isArray(myPosts) ? myPosts : (this.data.myPosts || []);
-    const panels = buildPanels(user, posts);
+    const orders = Array.isArray(myOrders) ? myOrders : (this.data.myOrders || []);
+    // openid 用于判断订单里我是「求助者」还是「帮助者」，登录后从 globalData 取
+    const app = getApp();
+    const openid = (app && app.globalData && app.globalData.openid) || user.openid || '';
+    const panels = buildPanels({ ...user, openid }, posts, orders);
     const badges = getEarnedBadges(user);
     const creditColor = getCreditBadgeColor(user.creditScore);
 
@@ -71,6 +92,7 @@ Page({
         badges
       },
       myPosts: posts,
+      myOrders: orders,
       panels,
       activePanel: panels[this.data.activePanelKey] || panels.posts,
       creditColor,
@@ -86,6 +108,21 @@ Page({
       activePanelKey: key,
       activePanel: panel
     });
+  },
+
+  // 点击「我的发布」「我的参与」里的条目 → 跳转到对应详情页
+  openPanelItem(event) {
+    const id = event.currentTarget.dataset.id;
+    if (!id) return;
+
+    const key = this.data.activePanelKey;
+    if (key === 'posts') {
+      wx.navigateTo({ url: `/pages/service-detail/service-detail?id=${id}` });
+      return;
+    }
+    if (key === 'orders') {
+      wx.navigateTo({ url: `/pages/order-detail/order-detail?orderId=${id}` });
+    }
   },
 
   openPanelAction() {

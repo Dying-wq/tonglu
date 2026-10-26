@@ -82,7 +82,13 @@
 
     <view wx:if="{{activePanel.items.length === 0}}" class="empty-panel">{{activePanel.empty}}</view>
 
-    <view wx:for="{{activePanel.items}}" wx:key="id" class="panel-item">
+    <view
+      wx:for="{{activePanel.items}}"
+      wx:key="id"
+      class="panel-item"
+      data-id="{{item.id}}"
+      bindtap="openPanelItem"
+    >
       <view class="panel-item-title">{{item.title}}</view>
       <view class="panel-item-meta">{{item.meta}}</view>
       <view class="panel-item-desc">{{item.desc}}</view>

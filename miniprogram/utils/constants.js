@@ -28,20 +28,47 @@ const SERVICE_TYPES = [
 ];
 
 // 帖子状态
+// 取值必须与 cloudfunctions 实际写入数据库的值保持一致：
+// createPost 写 open，publisherAcceptOrder 写 locked，confirmComplete 写 resolved
 const POST_STATUS = {
-  OPEN: 'open',          // 进行中
-  RESOLVED: 'resolved',  // 已解决（求助者确认）
+  OPEN: 'open',          // 进行中（同车可见，可响应）
+  LOCKED: 'locked',      // 已锁定（求助者已确认帮助者，不再接受新响应）
+  RESOLVED: 'resolved',  // 已解决（求助者确认完成，列表下沉）
   CLOSED: 'closed',      // 已关闭（列车到站自动关闭）
   CANCELLED: 'cancelled' // 已取消
 };
 
-// 帮助响应状态
+// 帮助响应（订单）状态
+// 取值必须与 acceptOrder / publisherAcceptOrder / confirmComplete 写入的值一致
 const ORDER_STATUS = {
-  PENDING: 'pending',        // 有人响应，等待求助者选择
-  ACCEPTED: 'accepted',      // 求助者已选定帮助者
-  COMPLETED: 'completed',    // 已确认完成
-  EXPIRED: 'expired',        // 超时未确认，自动关闭
-  CANCELLED: 'cancelled'     // 已取消
+  PENDING_ACCEPT: 'pending_accept', // 已提交接单申请，等待求助者确认
+  IN_PROGRESS: 'in_progress',       // 求助者已确认，帮助进行中
+  COMPLETED: 'completed',           // 求助者已确认完成
+  EXPIRED: 'expired',               // 超时未确认，自动关闭
+  CANCELLED: 'cancelled'            // 已取消
+};
+
+// 状态中文文案（列表页、详情页统一取这里，避免各页面各写一套）
+const ORDER_STATUS_LABELS = {
+  pending_accept: '待确认',
+  in_progress: '进行中',
+  completed: '已完成',
+  expired: '已过期',
+  cancelled: '已取消'
+};
+
+const POST_STATUS_LABELS = {
+  open: '进行中',
+  locked: '已锁定',
+  resolved: '已解决',
+  closed: '已关闭',
+  cancelled: '已取消'
+};
+
+// 兼容旧版状态值：早期版本前端用 pending / accepted，读到老数据时归一化
+const LEGACY_STATUS_MAP = {
+  pending: ORDER_STATUS.PENDING_ACCEPT,
+  accepted: ORDER_STATUS.IN_PROGRESS
 };
 
 // ====================================================================
@@ -198,6 +225,9 @@ module.exports = {
   SERVICE_TYPES,
   POST_STATUS,
   ORDER_STATUS,
+  ORDER_STATUS_LABELS,
+  POST_STATUS_LABELS,
+  LEGACY_STATUS_MAP,
   INITIAL_CREDIT_SCORE,
   CREDIT_RULES,
   CREDIT_LEVELS,

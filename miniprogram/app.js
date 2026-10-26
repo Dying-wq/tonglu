@@ -1,4 +1,10 @@
 const { CLOUD_ENV_ID } = require('./config');
+const { createPost } = require('./utils/cloud-api');
+const {
+  readPendingPosts,
+  writePendingPosts,
+  flushPendingPosts: flushQueue
+} = require('./utils/draft');
 
 App({
   globalData: {
@@ -30,6 +36,28 @@ App({
   onShow() {
     this.refreshUnreadBadge();
     this.loadTrainBinding();
+    this.retryPendingPosts();
+  },
+
+  // 弱网兜底：把发布失败暂存在本地的内容补发出去（报告书 6.1.1）
+  async retryPendingPosts() {
+    if (!this.globalData.cloudReady || this.flushingPending) return;
+    const pending = readPendingPosts();
+    if (!pending.length) return;
+
+    this.flushingPending = true;
+    try {
+      const { sent, failed } = await flushQueue(pending, async (payload) => {
+        const result = await createPost(payload);
+        return Boolean(result && result.ok);
+      });
+      writePendingPosts(failed);
+      if (sent.length > 0) {
+        wx.showToast({ title: `${sent.length} 条暂存内容已自动发布`, icon: 'none' });
+      }
+    } finally {
+      this.flushingPending = false;
+    }
   },
 
   // 加载车次绑定状态

@@ -3,6 +3,7 @@ const { createPost, saveSubscribeAuth } = require('../../utils/cloud-api');
 const { requestSubscribe } = require('../../utils/subscribe');
 const { uploadPostImages } = require('../../utils/upload');
 const { detectRiskKeywords } = require('../../utils/risk');
+const { savePendingPost } = require('../../utils/draft');
 
 Page({
   data: {
@@ -165,6 +166,18 @@ Page({
       setTimeout(() => {
         wx.navigateBack();
       }, 1000);
+    } catch (error) {
+      // 隧道/弱网时发布请求会直接抛错，先把内容暂存本地，联网后由 app.onShow 自动补发
+      console.error('发布失败：', error);
+      savePendingPost(postData);
+      wx.showModal({
+        title: '网络不稳定',
+        content: '内容已暂存到本地，联网后会自动重试发布，不用重新填写。',
+        showCancel: false,
+        success: () => {
+          wx.navigateBack();
+        }
+      });
     } finally {
       this.setData({ uploading: false });
     }

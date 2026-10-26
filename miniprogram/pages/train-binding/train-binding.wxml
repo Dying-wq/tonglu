@@ -11,7 +11,8 @@
       <view class="binding-train">{{currentBinding.trainNo}}</view>
       <view class="binding-detail">{{currentBinding.carriageNo}}车厢{{currentBinding.seatNo ? ' · ' + currentBinding.seatNo + '座' : ''}}</view>
     </view>
-    <view class="binding-meta">已绑定 · 到站后自动解除</view>
+    <view class="binding-meta">已绑定 · {{bindingRemaining || '到站后自动解除'}}</view>
+    <view wx:if="{{arrivalText}}" class="binding-meta">预计到站时间：{{arrivalText}}</view>
     <button class="ghost-button unbind-btn" bindtap="unbind">解除绑定</button>
   </view>
 
@@ -51,6 +52,20 @@
         bindinput="updateField"
         maxlength="5"
       />
+    </view>
+
+    <view class="form-item">
+      <view class="form-label">到达时间（选填）</view>
+      <view class="arrival-row">
+        <picker mode="date" start="{{dateStart}}" value="{{arrivalDate}}" bindchange="onArrivalDateChange">
+          <view class="arrival-picker {{arrivalDate ? '' : 'placeholder'}}">{{arrivalDate || '选择日期'}}</view>
+        </picker>
+        <picker mode="time" value="{{arrivalTime}}" bindchange="onArrivalTimeChange">
+          <view class="arrival-picker {{arrivalTime ? '' : 'placeholder'}}">{{arrivalTime || '选择时间'}}</view>
+        </picker>
+        <view wx:if="{{arrivalDate || arrivalTime}}" class="arrival-clear" bindtap="clearArrival">清除</view>
+      </view>
+      <view class="form-hint">{{arrivalHint}}</view>
     </view>
   </view>
 

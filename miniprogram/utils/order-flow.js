@@ -1,37 +1,82 @@
 // 订单/求助状态流转工具
+//
+// 状态取值说明（务必与 cloudfunctions 保持一致）：
+//   接单申请：acceptOrder           → order.pending_accept + post.open
+//   求助者确认：publisherAcceptOrder → order.in_progress   + post.locked
+//   确认完成：confirmComplete       → order.completed     + post.resolved
+// 早期版本前端曾用 pending/accepted 两值，读取老数据时通过 normalizeOrderStatus 归一化。
 
+const {
+  ORDER_STATUS,
+  POST_STATUS,
+  ORDER_STATUS_LABELS,
+  POST_STATUS_LABELS,
+  LEGACY_STATUS_MAP
+} = require('./constants');
+
+// 帮助者发起接单申请：帖子仍然公开可见（其他同车旅客还能看到，但已有一条待确认申请）
 function getInitialOrderState() {
   return {
-    orderStatus: 'pending',
-    postStatus: 'open'
+    orderStatus: ORDER_STATUS.PENDING_ACCEPT,
+    postStatus: POST_STATUS.OPEN
   };
 }
 
+// 求助者确认某位帮助者：帖子锁定，从公开列表隐藏
 function getAcceptedOrderState() {
   return {
-    orderStatus: 'accepted',
-    postStatus: 'open'  // 帖子仍公开可见，直到求助者确认解决
+    orderStatus: ORDER_STATUS.IN_PROGRESS,
+    postStatus: POST_STATUS.LOCKED
   };
 }
 
+// 求助者点击「问题已解决」：订单完成，帖子转为已解决并在列表下沉
 function getCompletedOrderState() {
   return {
-    orderStatus: 'completed',
-    postStatus: 'resolved'
+    orderStatus: ORDER_STATUS.COMPLETED,
+    postStatus: POST_STATUS.RESOLVED
   };
 }
 
-// 帖子在列表中是否可见（open 和 resolved 都可见，但 resolved 下沉底部）
+// 归一化历史状态值（pending → pending_accept，accepted → in_progress）
+function normalizeOrderStatus(status) {
+  const value = String(status || '').trim();
+  if (!value) return '';
+  return LEGACY_STATUS_MAP[value] || value;
+}
+
+function normalizePostStatus(status) {
+  const value = String(status || '').trim();
+  if (!value) return '';
+  return LEGACY_STATUS_MAP[value] || value;
+}
+
+function getOrderStatusLabel(status) {
+  const normalized = normalizeOrderStatus(status);
+  return ORDER_STATUS_LABELS[normalized] || normalized || '未知状态';
+}
+
+function getPostStatusLabel(status) {
+  const normalized = normalizePostStatus(status);
+  return POST_STATUS_LABELS[normalized] || normalized || '未知状态';
+}
+
+// 帖子在公开列表中是否可见（open 与 resolved 可见，resolved 下沉底部；locked/closed 不可见）
 function isPostVisibleInList(post) {
   if (!post || !post.status) return true;
-  return post.status === 'open' || post.status === 'resolved';
+  const status = normalizePostStatus(post.status);
+  return status === POST_STATUS.OPEN || status === POST_STATUS.RESOLVED;
 }
 
 // 排序：open 在前，resolved 在后；同状态内按时间倒序
 function sortPostsByStatus(posts) {
-  const open = posts.filter((p) => !p.status || p.status === 'open');
-  const resolved = posts.filter((p) => p.status === 'resolved');
-  const others = posts.filter((p) => p.status && p.status !== 'open' && p.status !== 'resolved');
+  const list = Array.isArray(posts) ? posts : [];
+  const open = list.filter((p) => !p.status || normalizePostStatus(p.status) === POST_STATUS.OPEN);
+  const resolved = list.filter((p) => normalizePostStatus(p.status) === POST_STATUS.RESOLVED);
+  const others = list.filter((p) => {
+    const status = normalizePostStatus(p.status);
+    return status && status !== POST_STATUS.OPEN && status !== POST_STATUS.RESOLVED;
+  });
 
   const sortByTime = (a, b) => {
     const ta = a.createdAtTs || 0;
@@ -61,8 +106,12 @@ function getUrgencyInfo(remainingRatio, createdAtTs) {
 
 module.exports = {
   getAcceptedOrderState,
-  getInitialOrderState,
   getCompletedOrderState,
+  getInitialOrderState,
+  normalizeOrderStatus,
+  normalizePostStatus,
+  getOrderStatusLabel,
+  getPostStatusLabel,
   isPostVisibleInList,
   sortPostsByStatus,
   getUrgencyInfo

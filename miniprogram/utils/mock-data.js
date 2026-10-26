@@ -274,7 +274,7 @@ const messages = [
 const demoOrder = {
   id: 'order_001',
   title: '急需一片卫生巾',
-  status: 'accepted',
+  status: 'in_progress',
   amount: 0,
   publisherName: '旅者',
   takerName: '热心大叔'

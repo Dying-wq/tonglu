@@ -1,6 +1,7 @@
 const mockData = require('./mock-data');
 const { isPostVisibleInList, sortPostsByStatus, getUrgencyInfo } = require('./order-flow');
 const { getCreditBadgeColor, getCreditLevelName } = require('./rank');
+const { calcRemainingRatio } = require('./train');
 
 function getCloudReady() {
   const app = typeof getApp === 'function' ? getApp() : null;
@@ -107,7 +108,8 @@ async function getPosts(type, trainNo) {
 
     const app2 = typeof getApp === 'function' ? getApp() : null;
     const binding = app2 && app2.globalData.trainBinding;
-    const remainingRatio = binding ? binding.remainingRatio : 1;
+    // 剩余车程比例按当前时间实时计算，避免用绑定时的静态值导致颜色永远不变
+    const remainingRatio = binding ? calcRemainingRatio(binding) : 1;
 
     return res.data.map((post) => {
       const urgencyInfo = getUrgencyInfo(remainingRatio, post.createdAt);
@@ -160,6 +162,37 @@ async function getMyPosts() {
     return res.data;
   } catch (error) {
     console.error('读取我的发布失败：', error);
+    return [];
+  }
+}
+
+// ====================================================================
+// 我的参与：查我作为「求助者」或「帮助者」参与的订单
+// acceptOrder 写入 publisherOpenid / takerOpenid，没有 _openid 字段，
+// 因此只能用这两个字段做 or 查询。集合权限「仅创建者可读写」下，
+// 读不到别人代建的记录，所以这里只查自己相关的单子。
+// ====================================================================
+async function getMyOrders() {
+  if (!getCloudReady()) return [];
+
+  const app = typeof getApp === 'function' ? getApp() : null;
+  const openid = app && app.globalData ? app.globalData.openid : '';
+  if (!openid) return [];
+
+  try {
+    const db = wx.cloud.database();
+    const _ = db.command;
+    const res = await db.collection('orders')
+      .where(_.or([
+        { takerOpenid: openid },
+        { publisherOpenid: openid }
+      ]))
+      .orderBy('createdAt', 'desc')
+      .limit(20)
+      .get();
+    return res.data || [];
+  } catch (error) {
+    console.error('读取我的参与失败：', error);
     return [];
   }
 }
@@ -499,6 +532,7 @@ module.exports = {
   getPosts,
   getPostById,
   getMyPosts,
+  getMyOrders,
   createPost,
   acceptOrder,
   ensureConversation,
