@@ -11,8 +11,6 @@ const visibleFiles = [
   'miniprogram/pages/rules/rules.wxml',
   'miniprogram/pages/rules/rules.js',
   'miniprogram/pages/search/search.wxml',
-  'miniprogram/pages/map/map.wxml',
-  'miniprogram/pages/map/map.js',
   'miniprogram/pages/order-detail/order-detail.wxml',
   'miniprogram/pages/review/review.wxml'
 ];
