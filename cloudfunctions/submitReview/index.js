@@ -1,31 +1,12 @@
-const ranks = [
-  { name: '青铜', min: 0, max: 99 },
-  { name: '白银', min: 100, max: 199 },
-  { name: '黄金', min: 200, max: 399 },
-  { name: '铂金', min: 400, max: 699 },
-  { name: '钻石', min: 700, max: 999 },
-  { name: '星耀', min: 1000, max: 1499 },
-  { name: '王者', min: 1500, max: Infinity }
-];
+const cloud = require('wx-server-sdk');
 
-function getRankByScore(score) {
-  const safeScore = Math.max(0, Number(score) || 0);
-  return ranks.find((rank) => safeScore >= rank.min && safeScore <= rank.max).name;
-}
+cloud.init({
+  env: cloud.DYNAMIC_CURRENT_ENV
+});
 
-function getReviewScoreChange(rating) {
-  const reviewBonusMap = {
-    good: 10,
-    normal: 0,
-    bad: -10
-  };
+const db = cloud.database();
 
-  return {
-    completionScore: 20,
-    reviewBonus: reviewBonusMap[rating] || 0,
-    total: 20 + (reviewBonusMap[rating] || 0)
-  };
-}
+const VALID_RATINGS = ['good', 'normal', 'bad'];
 
 exports.main = async (event = {}) => {
   if (!event.orderId || !event.revieweeOpenid || !event.rating) {
@@ -36,13 +17,69 @@ exports.main = async (event = {}) => {
     };
   }
 
+  if (!VALID_RATINGS.includes(event.rating)) {
+    return {
+      ok: false,
+      code: 'INVALID_RATING',
+      message: '评价类型不合法。'
+    };
+  }
+
   const wxContext = cloud.getWXContext();
-  const score = getReviewScoreChange(event.rating);
-  const userRes = await db.collection('users').where({ openid: event.revieweeOpenid }).limit(1).get();
-  const reviewee = userRes.data[0];
-  const currentScore = reviewee ? Number(reviewee.creditScore) || 0 : 0;
-  const nextScore = Math.max(0, currentScore + score.total);
-  const nextRank = getRankByScore(nextScore);
+  let order = null;
+  try {
+    const orderRes = await db.collection('orders').doc(event.orderId).get();
+    order = orderRes.data;
+  } catch (error) {
+    order = null;
+  }
+
+  if (!order) {
+    return {
+      ok: false,
+      code: 'ORDER_NOT_FOUND',
+      message: '订单不存在。'
+    };
+  }
+
+  if (order.status !== 'completed') {
+    return {
+      ok: false,
+      code: 'ORDER_NOT_COMPLETED',
+      message: '只有已完成的订单可以评价。'
+    };
+  }
+
+  const isPublisher = order.publisherOpenid === wxContext.OPENID;
+  const isTaker = order.takerOpenid === wxContext.OPENID;
+  if (!isPublisher && !isTaker) {
+    return {
+      ok: false,
+      code: 'NOT_PARTICIPANT',
+      message: '只有订单双方可以评价。'
+    };
+  }
+
+  const counterpart = isPublisher ? order.takerOpenid : order.publisherOpenid;
+  if (!counterpart || counterpart !== event.revieweeOpenid) {
+    return {
+      ok: false,
+      code: 'INVALID_REVIEWEE',
+      message: '被评价人必须是订单的另一方。'
+    };
+  }
+
+  const existing = await db.collection('reviews')
+    .where({ orderId: event.orderId, reviewerOpenid: wxContext.OPENID })
+    .limit(1)
+    .get();
+  if (existing.data.length) {
+    return {
+      ok: false,
+      code: 'ALREADY_REVIEWED',
+      message: '你已经评价过这笔订单。'
+    };
+  }
 
   await db.collection('reviews').add({
     data: {
@@ -50,37 +87,16 @@ exports.main = async (event = {}) => {
       reviewerOpenid: wxContext.OPENID,
       revieweeOpenid: event.revieweeOpenid,
       rating: event.rating,
-      content: event.content || '',
-      scoreChange: score.total,
+      content: String(event.content || '').slice(0, 200),
       createdAt: db.serverDate()
     }
   });
 
-  if (reviewee) {
-    await db.collection('users').doc(reviewee._id).update({
-      data: {
-        creditScore: nextScore,
-        rankName: nextRank,
-        monthlyCompletedCount: command.inc(1),
-        lastCompletedAt: db.serverDate(),
-        updatedAt: db.serverDate()
-      }
-    });
-  }
-
+  // 按报告书口径：评价只记录口碑，不额外调整信用分。
+  // 完成互助的 +5 已在 confirmComplete 中发放，避免重复加分。
   return {
     ok: true,
     action: 'submitReview',
-    scoreChange: score,
-    nextScore,
-    nextRank
+    creditChange: 0
   };
 };
-const cloud = require('wx-server-sdk');
-
-cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
-});
-
-const db = cloud.database();
-const command = db.command;

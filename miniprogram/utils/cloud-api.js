@@ -72,6 +72,10 @@ async function unbindTrain() {
 async function getPosts(type, trainNo) {
   const app = typeof getApp === 'function' ? getApp() : null;
   const currentTrain = trainNo || (app && app.globalData.trainBinding && app.globalData.trainBinding.trainNo);
+  // 车厢参与匹配：绑定信息里的车厢与当前车次一致时，只展示同车厢信息。
+  // 未绑定车厢或车次不一致时退回按车次过滤，避免用户突然看不到任何内容。
+  const binding = app && app.globalData ? app.globalData.trainBinding : null;
+  const currentCarriage = binding && binding.trainNo === currentTrain ? binding.carriageNo : '';
 
   // 未绑定车次时不展示任何帖子。铁路互助的核心是同车匹配，
   // 未绑定用户若能看到全平台信息，等于绕过了这一核心设计。
@@ -82,9 +86,12 @@ async function getPosts(type, trainNo) {
 
   if (!getCloudReady()) {
     let visiblePosts = mockData.posts.filter(isPostVisibleInList);
-    // 同车次过滤
+    // 同车次 + 同车厢过滤
     if (currentTrain) {
       visiblePosts = visiblePosts.filter((post) => post.trainNo === currentTrain);
+    }
+    if (currentCarriage) {
+      visiblePosts = visiblePosts.filter((post) => String(post.carriageNo || '') === String(currentCarriage));
     }
     // 类型过滤
     if (type) {
@@ -99,6 +106,7 @@ async function getPosts(type, trainNo) {
     const query = {};
     if (type) query.type = type;
     if (currentTrain) query.trainNo = currentTrain;
+    if (currentCarriage) query.carriageNo = currentCarriage;
     query.status = db.command.in(['open', 'resolved']);
 
     const res = await db.collection('posts')
@@ -217,6 +225,7 @@ async function getPostById(id) {
       seatNo: post.seatNo,
       images: post.images || [],
       location: post.location || `${post.trainNo} · ${post.carriageNo}车厢`,
+      publisherOpenid: post.publisherOpenid || '',
       publisherName: (post.publisherInfo && post.publisherInfo.nickname) || '匿名旅客',
       publisherCreditScore: (post.publisherInfo && post.publisherInfo.creditScore) || 60,
       publisherRank: (post.publisherInfo && post.publisherInfo.rankName) || getCreditLevelName(60),
@@ -272,6 +281,11 @@ async function confirmComplete(orderId) {
   return res.result;
 }
 
+async function cancelOrder(orderId) {
+  const res = await callFunction('cancelOrder', { orderId });
+  return res.result;
+}
+
 async function submitReview(payload) {
   const res = await callFunction('submitReview', payload);
   return res.result;
@@ -295,23 +309,13 @@ async function getConversationList() {
   try {
     const res = await callFunction('getConversationList');
     if (res.result && res.result.ok) return res.result.conversations || [];
-    const db = wx.cloud.database();
-    const dbRes = await db.collection('conversations').orderBy('lastMessageAt', 'desc').limit(50).get();
-    return dbRes.data.map((item) => ({
-      id: item._id,
-      postId: item.postId,
-      orderId: item.orderId,
-      name: item.peerName || item.postTitle || '同路旅客',
-      avatarText: item.peerAvatarText || (item.peerName ? item.peerName.slice(0, 1) : '旅'),
-      rankName: item.peerRankName || '可信任旅客',
-      lastMessage: item.lastMessage || '暂无消息',
-      lastMessageAt: '刚刚',
-      unread: item.unread || item.unreadCount || 0,
-      relatedTitle: item.relatedTitle || item.postTitle || ''
-    }));
+    console.warn('getConversationList 返回异常，已返回空会话列表');
+    return [];
   } catch (error) {
-    console.warn('读取 conversations 集合失败，已回退到本地会话：', error);
-    return mockData.conversations;
+    // 不再回退到前端直查 conversations 集合：集合权限一旦放开，
+    // 直查会绕过 openid 过滤，把全平台会话暴露给任意用户。
+    console.warn('读取会话列表失败，已返回空列表：', error);
+    return [];
   }
 }
 
@@ -362,6 +366,8 @@ async function getOrderById(orderId) {
       conversationId: order.conversationId,
       title: order.title,
       status: order.status,
+      publisherOpenid: order.publisherOpenid || '',
+      takerOpenid: order.takerOpenid || '',
       publisherName: order.publisherName || '求助者',
       takerName: order.takerName || '帮助者'
     };
@@ -547,6 +553,7 @@ module.exports = {
   getUnreadCount,
   getOrderById,
   confirmComplete,
+  cancelOrder,
   createComplaint,
   submitReview,
   requestWechatExchange,

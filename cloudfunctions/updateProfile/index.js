@@ -36,7 +36,8 @@ exports.main = async (event = {}) => {
     const result = await db.collection('users').add({
       data: {
         openid: wxContext.OPENID,
-        creditScore: 0,
+        creditScore: 60,
+        creditLevelName: '可信任旅客',
         rankName: '青铜',
         status: 'active',
         monthlyCompletedCount: 0,

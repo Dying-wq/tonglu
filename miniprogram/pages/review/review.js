@@ -1,18 +1,24 @@
-const { getReviewScoreChange } = require('../../utils/rank');
 const { submitReview } = require('../../utils/cloud-api');
 
 Page({
   data: {
+    orderId: '',
+    revieweeOpenid: '',
     rating: 'good',
-    score: getReviewScoreChange('good'),
-    content: ''
+    content: '',
+    submitting: false
+  },
+
+  onLoad(options = {}) {
+    this.setData({
+      orderId: options.orderId || '',
+      revieweeOpenid: options.revieweeOpenid || ''
+    });
   },
 
   selectRating(event) {
-    const rating = event.currentTarget.dataset.rating;
     this.setData({
-      rating,
-      score: getReviewScoreChange(rating)
+      rating: event.currentTarget.dataset.rating
     });
   },
 
@@ -23,15 +29,39 @@ Page({
   },
 
   async submitReview() {
-    await submitReview({
-      orderId: 'demo_order',
-      revieweeOpenid: 'demo_user',
+    if (this.data.submitting) return;
+
+    if (!this.data.orderId || !this.data.revieweeOpenid) {
+      wx.showToast({
+        title: '评价信息不完整',
+        icon: 'none'
+      });
+      return;
+    }
+
+    this.setData({ submitting: true });
+    const result = await submitReview({
+      orderId: this.data.orderId,
+      revieweeOpenid: this.data.revieweeOpenid,
       rating: this.data.rating,
-      currentScore: 260
+      content: this.data.content
     });
+    this.setData({ submitting: false });
+
+    if (!result || !result.ok) {
+      wx.showToast({
+        title: (result && result.message) || '评价提交失败',
+        icon: 'none'
+      });
+      return;
+    }
+
     wx.showToast({
-      title: `本次信誉 +${this.data.score.total}`,
+      title: '评价已提交',
       icon: 'none'
     });
+    setTimeout(() => {
+      wx.navigateBack();
+    }, 800);
   }
 });

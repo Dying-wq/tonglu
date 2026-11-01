@@ -7,6 +7,7 @@ Page({
     post: null,
     actionText: '我来帮',
     contactText: '私信联系',
+    canOrder: false,
     riskText: '平台禁止金钱交易，建议物物交换或无偿帮助。'
   },
 
@@ -16,7 +17,8 @@ Page({
     this.setData({
       post,
       actionText: service ? service.actionText : '我来帮',
-      contactText: this.getContactText(post.type)
+      contactText: this.getContactText(post.type),
+      canOrder: this.computeCanOrder(post)
     });
     this.loadPost(options.id);
   },
@@ -27,8 +29,19 @@ Page({
     this.setData({
       post,
       actionText: service ? service.actionText : '我来帮',
-      contactText: this.getContactText(post.type)
+      contactText: this.getContactText(post.type),
+      canOrder: this.computeCanOrder(post)
     });
+  },
+
+  // 只有帖子仍开放且不是自己发布时，才显示「我来帮/联系TA」
+  computeCanOrder(post) {
+    if (!post || post.type === 'topic') return false;
+    if (post.status && post.status !== 'open') return false;
+    const app = typeof getApp === 'function' ? getApp() : null;
+    const openid = app && app.globalData ? app.globalData.openid : '';
+    if (openid && post.publisherOpenid && post.publisherOpenid === openid) return false;
+    return true;
   },
 
   getContactText(type) {

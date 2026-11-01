@@ -33,7 +33,7 @@
 
   <view class="action-area">
     <button class="ghost-button" bindtap="goChat">{{contactText}}</button>
-    <button class="primary-button" bindtap="startOrder" wx:if="{{post.type !== 'topic'}}">{{actionText}}</button>
+    <button class="primary-button" bindtap="startOrder" wx:if="{{canOrder}}">{{actionText}}</button>
   </view>
 
   <button class="complaint" bindtap="goComplaint">举报此内容</button>

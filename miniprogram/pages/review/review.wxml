@@ -7,11 +7,10 @@
   </view>
 
   <view class="card score-card">
-    <view>完成订单：+{{score.completionScore}}</view>
-    <view>评价影响：{{score.reviewBonus}}</view>
-    <view class="total">本次合计：+{{score.total}}</view>
+    <view>完成互助的信用分奖励已在确认完成时发放（+5）。</view>
+    <view class="muted">评价仅记录口碑，不额外调整信用分。</view>
   </view>
 
   <textarea placeholder="写下评价内容" bindinput="updateContent" value="{{content}}"></textarea>
-  <button class="primary-button" bindtap="submitReview">提交评价</button>
+  <button class="primary-button" bindtap="submitReview" loading="{{submitting}}" disabled="{{submitting}}">提交评价</button>
 </view>

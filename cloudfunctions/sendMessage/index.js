@@ -27,8 +27,27 @@ exports.main = async (event = {}) => {
 
   const wxContext = cloud.getWXContext();
   const conversationRes = await db.collection('conversations').doc(event.conversationId).get();
-  const conversation = conversationRes.data;
+  const conversation = conversationRes.data || {};
   const participantIds = conversation.participantIds || conversation.participantOpenids || [];
+
+  // 只有会话参与者可以发消息，防止知道 conversationId 的第三方插话
+  if (!participantIds.includes(wxContext.OPENID)) {
+    return {
+      ok: false,
+      code: 'NOT_PARTICIPANT',
+      message: '你不是该会话成员，无法发送消息。'
+    };
+  }
+
+  // 会话被拉黑后不再允许继续发送
+  if (conversation.status === 'blocked') {
+    return {
+      ok: false,
+      code: 'CONVERSATION_BLOCKED',
+      message: '该会话已被拉黑，无法继续发送消息。'
+    };
+  }
+
   const receiverIds = participantIds.filter((id) => id !== wxContext.OPENID);
   const risk = detectRisk(event.content);
   const message = {
