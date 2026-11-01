@@ -25,6 +25,14 @@ Page({
 
   async loadPost(id) {
     const post = await getPostById(id);
+    if (!post) {
+      this.setData({
+        post: null,
+        canOrder: false
+      });
+      return;
+    }
+
     const service = serviceTypes.find((item) => item.key === post.type);
     this.setData({
       post,

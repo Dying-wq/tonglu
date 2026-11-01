@@ -233,7 +233,9 @@ async function getPostById(id) {
       createdAt: formatTime(post.createdAt)
     };
   } catch (error) {
-    return fallback;
+    // 云开发就绪后不回退演示帖子，避免详情页显示与真实数据无关的内容
+    console.warn('读取帖子详情失败：', error);
+    return null;
   }
 }
 
@@ -331,10 +333,12 @@ async function getMessageList(conversationId) {
   try {
     const res = await callFunction('getMessageList', { conversationId });
     if (res.result && res.result.ok) return res.result.messages || [];
-    return mockData.messages;
+    console.warn('getMessageList 返回异常，已返回空消息列表');
+    return [];
   } catch (error) {
-    console.warn('读取 messages 集合失败，已回退到本地消息：', error);
-    return mockData.messages;
+    // 云开发就绪后不再回退演示消息，避免假数据掩盖真实错误
+    console.warn('读取消息列表失败，已返回空列表：', error);
+    return [];
   }
 }
 
@@ -346,7 +350,8 @@ async function markConversationRead(conversationId) {
 async function getUnreadCount() {
   const res = await callFunction('getUnreadCount');
   if (res.result && res.result.ok) return res.result.unreadCount || 0;
-  return mockData.conversations.reduce((sum, item) => sum + (Number(item.unread) || 0), 0);
+  // 读不到未读数时按 0 处理，不再用本地演示会话累加
+  return 0;
 }
 
 async function getOrderById(orderId) {
@@ -372,8 +377,9 @@ async function getOrderById(orderId) {
       takerName: order.takerName || '帮助者'
     };
   } catch (error) {
-    console.warn('读取 orders 集合失败，已回退到演示订单：', error);
-    return fallback;
+    // 读不到订单时返回 null，由页面显示「订单不存在或无权查看」
+    console.warn('读取订单失败：', error);
+    return null;
   }
 }
 
@@ -399,8 +405,8 @@ async function getThankWall() {
       createdAt: formatTime(item.createdAt)
     }));
   } catch (error) {
-    console.warn('读取感谢墙失败，已回退到演示数据：', error);
-    return mockData.thankWall;
+    console.warn('读取感谢墙失败，已返回空列表：', error);
+    return [];
   }
 }
 

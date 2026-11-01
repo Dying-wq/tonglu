@@ -40,6 +40,14 @@ Page({
     }
 
     const order = await getOrderById(orderId);
+    if (!order) {
+      this.setData({
+        order: null,
+        loading: false
+      });
+      return;
+    }
+
     const app = typeof getApp === 'function' ? getApp() : null;
     const openid = app && app.globalData ? app.globalData.openid : '';
     const isPublisher = Boolean(openid && order.publisherOpenid === openid);
