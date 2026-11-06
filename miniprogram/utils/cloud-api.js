@@ -72,14 +72,13 @@ async function unbindTrain() {
 async function getPosts(type, trainNo) {
   const app = typeof getApp === 'function' ? getApp() : null;
   const currentTrain = trainNo || (app && app.globalData.trainBinding && app.globalData.trainBinding.trainNo);
-  // 车厢只用于「优先排序」，不参与过滤。
-  // 早期实现按车厢精确匹配，导致同车次不同车厢的旅客互相看不到，
-  // 而一节车厢用户基数很小，实际上等于把匹配范围压到几乎为零。
-  // 现在的策略：同车次全部可见，同车厢的排在前面。
-  const binding = app && app.globalData ? app.globalData.trainBinding : null;
-  const currentCarriage = binding && binding.trainNo === currentTrain ? binding.carriageNo : '';
 
-  // 未绑定车次时不展示任何帖子。铁路互助的核心是同车匹配，
+  // 匹配边界：同车次，且只按车次。
+  // 互助场景中，同一列车上的旅客走几节车厢就能帮上忙，车厢号只是
+  // 「我在哪」的定位信息（方便线下找到人），不构成可见性条件。
+  // 因此这里不按车厢过滤，也不按车厢排序——同车次的所有帖子平等展示。
+  //
+  // 未绑定车次时不展示任何帖子：铁路互助的核心是同车匹配，
   // 未绑定用户若能看到全平台信息，等于绕过了这一核心设计。
   // 此处返回空列表，由 home.wxml 显示"请先绑定车次查看同车信息"。
   if (!currentTrain) {
@@ -88,19 +87,13 @@ async function getPosts(type, trainNo) {
 
   if (!getCloudReady()) {
     let visiblePosts = mockData.posts.filter(isPostVisibleInList);
-    // 只按车次过滤，车厢不排除
+    // 只按车次过滤
     if (currentTrain) {
       visiblePosts = visiblePosts.filter((post) => post.trainNo === currentTrain);
     }
     // 类型过滤
     if (type) {
       visiblePosts = visiblePosts.filter((post) => post.type === type);
-    }
-    // 同车厢优先
-    if (currentCarriage) {
-      const same = visiblePosts.filter((post) => String(post.carriageNo || '') === String(currentCarriage));
-      const rest = visiblePosts.filter((post) => String(post.carriageNo || '') !== String(currentCarriage));
-      visiblePosts = [...same, ...rest];
     }
     // 排序：open在前，resolved在后
     return sortPostsByStatus(visiblePosts);
@@ -111,7 +104,7 @@ async function getPosts(type, trainNo) {
     const query = {};
     if (type) query.type = type;
     if (currentTrain) query.trainNo = currentTrain;
-    // 注意：这里不能加 query.carriageNo，否则不同车厢的用户互相看不到
+    // 不加 carriageNo 条件：同车次不同车厢的用户必须能互相看到
     query.status = db.command.in(['open', 'resolved']);
 
     const res = await db.collection('posts')
@@ -119,21 +112,14 @@ async function getPosts(type, trainNo) {
       .orderBy('createdAt', 'desc')
       .get();
 
-    // 同车厢的排前面，其他车厢紧随其后，各自保持时间倒序
     const rawPosts = res.data || [];
-    const orderedPosts = currentCarriage
-      ? [
-          ...rawPosts.filter((post) => String(post.carriageNo || '') === String(currentCarriage)),
-          ...rawPosts.filter((post) => String(post.carriageNo || '') !== String(currentCarriage))
-        ]
-      : rawPosts;
 
     const app2 = typeof getApp === 'function' ? getApp() : null;
     const binding = app2 && app2.globalData.trainBinding;
     // 剩余车程比例按当前时间实时计算，避免用绑定时的静态值导致颜色永远不变
     const remainingRatio = binding ? calcRemainingRatio(binding) : 1;
 
-    return orderedPosts.map((post) => {
+    return rawPosts.map((post) => {
       const urgencyInfo = getUrgencyInfo(remainingRatio, post.createdAt);
       return {
         id: post._id,
