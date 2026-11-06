@@ -327,13 +327,20 @@ async function getMessages(conversationId) {
 }
 
 async function getMessageList(conversationId) {
-  if (!getCloudReady() || !conversationId || conversationId === 'demo_conversation') {
-    return mockData.messages;
+  // 没有会话 id 就没有消息，不能回退演示数据：
+  // 假消息会带着「30 分钟前」这类固定时间，让用户误以为是真实聊天记录。
+  if (!conversationId) {
+    return [];
+  }
+  if (!getCloudReady()) {
+    return [];
   }
 
   try {
     const res = await callFunction('getMessageList', { conversationId });
-    if (res.result && res.result.ok) return res.result.messages || [];
+    if (res.result && res.result.ok) {
+      return (res.result.messages || []).map(normalizeMessage);
+    }
     console.warn('getMessageList 返回异常，已返回空消息列表');
     return [];
   } catch (error) {
@@ -341,6 +348,33 @@ async function getMessageList(conversationId) {
     console.warn('读取消息列表失败，已返回空列表：', error);
     return [];
   }
+}
+
+// 把云端返回的消息整理成页面直接可用的结构。
+// createdAt 可能是 Date 对象、时间戳或 ISO 字符串，统一转成「HH:mm」或「MM-DD HH:mm」。
+function normalizeMessage(item = {}) {
+  return {
+    id: item._id || item.id || `msg_${Math.random().toString(36).slice(2)}`,
+    sender: item.sender || (item.isMine ? 'me' : 'other'),
+    content: item.content || '',
+    contentType: item.contentType || 'text',
+    riskStatus: item.riskStatus || 'safe',
+    createdAt: formatMessageTime(item.createdAt)
+  };
+}
+
+function formatMessageTime(value) {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  const ts = date.getTime();
+  if (!Number.isFinite(ts)) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  const now = new Date();
+  const sameDay = date.getFullYear() === now.getFullYear()
+    && date.getMonth() === now.getMonth()
+    && date.getDate() === now.getDate();
+  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return sameDay ? time : `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${time}`;
 }
 
 async function markConversationRead(conversationId) {

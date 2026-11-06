@@ -11,7 +11,14 @@
     <view class="tool-chip dark" bindtap="blockUser">拉黑</view>
   </view>
 
+  <view wx:if="{{blocked}}" class="blocked-banner">已拉黑该用户，双方无法继续发送消息</view>
+
   <scroll-view class="messages" scroll-y>
+    <view wx:if="{{loading}}" class="empty-hint">加载中…</view>
+    <view wx:elif="{{messages.length === 0}}" class="empty-hint">
+      <view class="empty-title">还没有消息</view>
+      <view class="empty-desc">发一条消息，和同车旅客聊聊具体需求</view>
+    </view>
     <view
       wx:for="{{messages}}"
       wx:key="id"
@@ -19,13 +26,13 @@
     >
       <view>{{item.content}}</view>
       <view wx:if="{{item.riskStatus === 'warning'}}" class="bubble-risk">风险提醒</view>
-      <view class="time">{{item.createdAt || '刚刚'}}</view>
+      <view class="time">{{item.createdAt || ''}}</view>
     </view>
   </scroll-view>
 
-  <view wx:if="{{riskWarning}}" class="risk-tip">{{riskWarning}}</view>
+  <view wx:if="{{riskWarning && !blocked}}" class="risk-tip">{{riskWarning}}</view>
 
-  <view class="quick-row">
+  <view wx:if="{{!blocked}}" class="quick-row">
     <view
       wx:for="{{quickReplies}}"
       wx:key="*this"
@@ -37,7 +44,10 @@
     </view>
   </view>
 
-  <view class="composer">
+  <view wx:if="{{blocked}}" class="composer composer-blocked">
+    <view class="composer-disabled">已拉黑，无法发送消息</view>
+  </view>
+  <view wx:else class="composer">
     <input placeholder="输入消息" value="{{inputValue}}" bindinput="updateInput" />
     <button bindtap="sendText">发送</button>
   </view>

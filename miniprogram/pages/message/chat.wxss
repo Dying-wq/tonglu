@@ -155,3 +155,52 @@
   color: #ffffff;
   line-height: 76rpx;
 }
+
+/* 消息为空时的占位 */
+.empty-hint {
+  padding: 80rpx 24rpx;
+  text-align: center;
+}
+
+.empty-title {
+  color: #6b7280;
+  font-size: 29rpx;
+  font-weight: 700;
+}
+
+.empty-desc {
+  margin-top: 12rpx;
+  color: #9ca3af;
+  font-size: 25rpx;
+}
+
+/* 已拉黑提示条 */
+.blocked-banner {
+  margin: 0 24rpx 12rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 8rpx;
+  background: #fef2f2;
+  border: 1rpx solid #fecaca;
+  color: #b91c1c;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+/* 拉黑后输入区变为不可用状态 */
+.composer-blocked {
+  justify-content: center;
+}
+
+.composer-disabled {
+  width: 100%;
+  height: 76rpx;
+  line-height: 76rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 8rpx;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 26rpx;
+  text-align: center;
+  box-sizing: border-box;
+}

@@ -10,12 +10,24 @@ const THEME_COLORS = [
   { key: '#14B8A6', name: '远方青' }
 ];
 
-function getInitialProfile() {
+// 空表单：作为 data 的初始值，避免页面首次渲染时报错。
+// 真正的数据在 onLoad 里读取，不能写在 data 字面量中——
+// data 里的函数调用只在模块加载时求值一次，之后永远拿到同一个旧快照，
+// 表现为「保存过资料，再进来还是默认界面」。
+const EMPTY_FORM = {
+  avatarUrl: '',
+  avatarText: '旅',
+  nickname: '',
+  signature: '',
+  themeColor: '#1f6feb'
+};
+
+function buildInitialProfile() {
   const saved = wx.getStorageSync('customProfile') || {};
   return {
     avatarUrl: saved.avatarUrl || currentUser.avatarUrl || '',
     avatarText: saved.avatarText || currentUser.avatarText || '旅',
-    nickname: saved.nickname || currentUser.nickname || '旅者',
+    nickname: saved.nickname || currentUser.nickname || '',
     signature: saved.signature || currentUser.signature || '',
     themeColor: saved.themeColor || currentUser.themeColor || '#1f6feb'
   };
@@ -23,8 +35,13 @@ function getInitialProfile() {
 
 Page({
   data: {
-    form: getInitialProfile(),
+    form: EMPTY_FORM,
     themeColors: THEME_COLORS
+  },
+
+  // 每次进入页面都重新读取已保存的资料
+  onLoad() {
+    this.setData({ form: buildInitialProfile() });
   },
 
   chooseAvatar(event) {
