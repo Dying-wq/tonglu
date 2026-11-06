@@ -153,3 +153,41 @@
   font-size: 22rpx;
   box-sizing: border-box;
 }
+
+/* 已拉黑的会话仍然保留在列表里，否则用户点不进去、也就无法取消拉黑 */
+.conversation-card.is-blocked {
+  opacity: 0.72;
+}
+
+.blocked-tag {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 0 12rpx;
+  height: 34rpx;
+  border-radius: 17rpx;
+  background: #fef2f2;
+  border: 1rpx solid #fecaca;
+  color: #b91c1c;
+  line-height: 32rpx;
+  font-size: 20rpx;
+  font-weight: 800;
+}
+
+/* 会话为空 / 加载中 */
+.conv-empty {
+  padding: 120rpx 40rpx;
+  text-align: center;
+}
+
+.conv-empty-title {
+  color: #6b7280;
+  font-size: 29rpx;
+  font-weight: 700;
+}
+
+.conv-empty-desc {
+  margin-top: 12rpx;
+  color: #9ca3af;
+  font-size: 25rpx;
+  line-height: 1.6;
+}

@@ -37,6 +37,55 @@ function callFunction(name, data = {}) {
 }
 
 // ====================================================================
+// 拉黑名单缓存
+// ====================================================================
+// 首页每次刷新都去云端拉一次拉黑名单太重（一次刷新多一次云函数调用），
+// 所以本地缓存 5 分钟。拉黑 / 取消拉黑后调用 invalidateBlockCache()
+// 让缓存立即失效，保证「刚拉黑就看不到对方帖子」是即时生效的。
+const BLOCK_CACHE_TTL = 5 * 60 * 1000;
+const EMPTY_BLOCK_RELATIONS = { blockedOpenids: [], blockedByOpenids: [], hiddenOpenids: [] };
+let blockCache = { relations: EMPTY_BLOCK_RELATIONS, fetchedAt: 0 };
+
+function invalidateBlockCache() {
+  blockCache = { relations: EMPTY_BLOCK_RELATIONS, fetchedAt: 0 };
+}
+
+async function getBlockRelations(force = false) {
+  const now = Date.now();
+  if (!force && blockCache.fetchedAt && now - blockCache.fetchedAt < BLOCK_CACHE_TTL) {
+    return blockCache.relations;
+  }
+
+  if (!getCloudReady()) {
+    return blockCache.relations;
+  }
+
+  const res = await callFunction('getBlockList');
+  const result = res.result || {};
+
+  if (result.ok) {
+    blockCache = {
+      relations: {
+        blockedOpenids: result.blockedOpenids || [],
+        blockedByOpenids: result.blockedByOpenids || [],
+        hiddenOpenids: result.hiddenOpenids || []
+      },
+      fetchedAt: now
+    };
+    return blockCache.relations;
+  }
+
+  // 云函数未部署 / 调用失败时不清空已有缓存：
+  // 拉黑名单读不到，不该让被拉黑的人重新出现在首页。
+  return blockCache.relations;
+}
+
+async function getBlockList(force = false) {
+  const relations = await getBlockRelations(force);
+  return relations.hiddenOpenids;
+}
+
+// ====================================================================
 // 登录
 // ====================================================================
 async function login() {
@@ -85,6 +134,13 @@ async function getPosts(type, trainNo) {
     return [];
   }
 
+  // 拉黑过滤：被我拉黑的人、以及拉黑我的人，帖子都不出现在首页。
+  // 双向隐藏是刻意的——单向隐藏时，被拉黑方仍能看到帖子、点进去私信，
+  // 却因为会话被阻断而发不出消息，表现为「点了发送没反应」的困惑。
+  const hiddenOpenids = await getBlockList();
+  const isHiddenPublisher = (post) => Boolean(post.publisherOpenid)
+    && hiddenOpenids.indexOf(post.publisherOpenid) !== -1;
+
   if (!getCloudReady()) {
     let visiblePosts = mockData.posts.filter(isPostVisibleInList);
     // 只按车次过滤
@@ -95,6 +151,8 @@ async function getPosts(type, trainNo) {
     if (type) {
       visiblePosts = visiblePosts.filter((post) => post.type === type);
     }
+    // 拉黑过滤
+    visiblePosts = visiblePosts.filter((post) => !isHiddenPublisher(post));
     // 排序：open在前，resolved在后
     return sortPostsByStatus(visiblePosts);
   }
@@ -106,6 +164,11 @@ async function getPosts(type, trainNo) {
     if (currentTrain) query.trainNo = currentTrain;
     // 不加 carriageNo 条件：同车次不同车厢的用户必须能互相看到
     query.status = db.command.in(['open', 'resolved']);
+    // 在数据库查询层就排除被拉黑用户的帖子，而不是取回来再在 JS 里筛：
+    // 客户端查询有 20 条上限，先取后筛会让一页只剩十几条，出现"翻不到底"的错觉。
+    if (hiddenOpenids.length) {
+      query.publisherOpenid = db.command.nin(hiddenOpenids);
+    }
 
     const res = await db.collection('posts')
       .where(query)
@@ -470,6 +533,18 @@ async function reportConversationOrMessage(payload = {}) {
 
 async function blockUser(payload = {}) {
   const res = await callFunction('blockUser', payload);
+  // 拉黑成功后立即让名单缓存失效，否则 5 分钟内首页还能看到对方帖子
+  if (res.result && res.result.ok) {
+    invalidateBlockCache();
+  }
+  return res.result;
+}
+
+async function unblockUser(payload = {}) {
+  const res = await callFunction('unblockUser', payload);
+  if (res.result && res.result.ok) {
+    invalidateBlockCache();
+  }
   return res.result;
 }
 
@@ -606,6 +681,10 @@ module.exports = {
   sendSubscribeNotice,
   reportConversationOrMessage,
   blockUser,
+  unblockUser,
+  getBlockList,
+  getBlockRelations,
+  invalidateBlockCache,
   getThankWall,
   getAdminDashboard,
   adminUpdateStatus

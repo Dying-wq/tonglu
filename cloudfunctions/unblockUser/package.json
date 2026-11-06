@@ -1,0 +1,9 @@
+{
+  "name": "unblockUser",
+  "version": "1.0.0",
+  "description": "取消拉黑：解除 blocks 记录并恢复会话状态",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

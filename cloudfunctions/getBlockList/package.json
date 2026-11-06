@@ -1,0 +1,9 @@
+{
+  "name": "getBlockList",
+  "version": "1.0.0",
+  "description": "查询当前用户的拉黑名单，供首页帖子过滤使用",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

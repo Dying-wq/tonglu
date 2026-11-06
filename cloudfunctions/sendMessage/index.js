@@ -5,6 +5,7 @@ cloud.init({
 });
 
 const db = cloud.database();
+const _ = db.command;
 
 const RISK_WORDS = ['代课', '替课', '代签到', '代签', '代写', '代考试', '代考', '刷课', '出售答案', '先转账', '押金', '保证金', '低俗', '陪聊'];
 
@@ -46,6 +47,31 @@ exports.main = async (event = {}) => {
       code: 'CONVERSATION_BLOCKED',
       message: '该会话已被拉黑，无法继续发送消息。'
     };
+  }
+
+  // 再查一次 blocks：两人互相拉黑后其中一方取消拉黑，conversations.status
+  // 会回到 active，但另一方的拉黑记录仍然有效。只看会话状态会漏掉这种情况。
+  const peerOpenid = participantIds.find((id) => id !== wxContext.OPENID) || '';
+  if (peerOpenid) {
+    try {
+      const blockRes = await db.collection('blocks')
+        .where(_.or([
+          { blockerId: wxContext.OPENID, targetId: peerOpenid, status: 'active' },
+          { blockerId: peerOpenid, targetId: wxContext.OPENID, status: 'active' }
+        ]))
+        .limit(1)
+        .get();
+      if (blockRes.data && blockRes.data.length) {
+        return {
+          ok: false,
+          code: 'CONVERSATION_BLOCKED',
+          message: '双方存在拉黑关系，无法继续发送消息。'
+        };
+      }
+    } catch (error) {
+      // blocks 集合不存在或查询失败时按「无拉黑记录」放行，
+      // 不能让拉黑名单的故障连带把正常聊天也堵死。
+    }
   }
 
   const receiverIds = participantIds.filter((id) => id !== wxContext.OPENID);

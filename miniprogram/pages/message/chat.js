@@ -2,13 +2,15 @@ const { detectRiskKeywords } = require('../../utils/risk');
 const {
   blockUser: blockUserApi,
   createOrGetConversation,
+  getBlockRelations,
   getMessageList,
   getPostById,
   login,
   markConversationRead,
   reportConversationOrMessage,
   requestWechatExchange,
-  sendMessage
+  sendMessage,
+  unblockUser: unblockUserApi
 } = require('../../utils/cloud-api');
 
 Page({
@@ -26,6 +28,11 @@ Page({
     wechatExchangeStatus: '未交换',
     // 会话是否已被拉黑：拉黑后云端 sendMessage 会拒绝，前端同步禁用输入
     blocked: false,
+    // 拉黑方向：true = 我拉黑了对方（可以自己取消）；
+    // false = 对方拉黑了我（只能等对方解除）
+    blockedByMe: false,
+    // 对方 openid：从会话列表进入时由 query 传入，从帖子进入时取帖子发布者
+    peerOpenid: '',
     loading: true,
     quickReplies: ['我可以，现在方便沟通吗？', '请问具体时间和地点是？', '我已到附近，稍等一下。']
   },
@@ -43,6 +50,7 @@ Page({
     await login();
     let conversationId = options.conversationId || '';
     let post = null;
+    let peerOpenid = options.peerOpenid || '';
     if (options.postId) {
       post = await getPostById(options.postId);
       const result = await createOrGetConversation({
@@ -51,12 +59,31 @@ Page({
         postId: options.postId
       });
       conversationId = (result && result.conversationId) || conversationId;
+      peerOpenid = peerOpenid || (post && post.publisherOpenid) || '';
     }
-    this.setData({ conversationId, post });
+    this.setData({ conversationId, post, peerOpenid });
     if (conversationId) {
       await markConversationRead(conversationId);
     }
+    // 先判定拉黑状态，再拉消息：已拉黑的会话要直接显示禁用态，
+    // 而不是让用户打一行字、点发送，才被云端告知发不出去。
+    await this.refreshBlockState();
     this.loadMessages(true);
+  },
+
+  // 从 blocks 集合反查当前会话的拉黑方向。
+  // 云端不返回拉黑状态（conversations.status 只有 blocked/active，
+  // 分不清是谁拉黑了谁），所以这里用双向名单比对。
+  async refreshBlockState() {
+    const peer = this.data.peerOpenid;
+    if (!peer) return;
+    const relations = await getBlockRelations();
+    const blockedByMe = relations.blockedOpenids.indexOf(peer) !== -1;
+    const blockedByPeer = relations.blockedByOpenids.indexOf(peer) !== -1;
+    this.setData({
+      blocked: blockedByMe || blockedByPeer,
+      blockedByMe
+    });
   },
 
   async loadMessages(showConnected) {
@@ -124,6 +151,8 @@ Page({
       if (code === 'CONVERSATION_BLOCKED') {
         message = '该会话已被拉黑，无法继续发送';
         this.setData({ blocked: true });
+        // 顺便查一次拉黑方向，好把按钮显示成「取消拉黑」还是「等待对方解除」
+        this.refreshBlockState();
       } else if (result && result.offline) {
         message = '云服务未连接，消息未发送';
       }
@@ -186,13 +215,48 @@ Page({
     });
 
     if (result && result.ok) {
-      this.setData({ blocked: true, inputValue: '' });
+      this.setData({ blocked: true, blockedByMe: true, inputValue: '' });
       wx.showToast({ title: '已拉黑，双方无法再发消息', icon: 'none' });
       return;
     }
 
     // 拉黑失败要说清原因：常见是 blocks 集合未创建
     const message = (result && result.message) || '拉黑失败，请检查 blocks 集合是否已创建';
+    wx.showToast({ title: message, icon: 'none' });
+  },
+
+  // 取消拉黑：恢复 blocks 记录与会话状态，双方可以重新发消息。
+  // 只对自己发起的拉黑有效；对方拉黑我时云端返回 NO_ACTIVE_BLOCK。
+  async unblock() {
+    const confirm = await new Promise((resolve) => {
+      wx.showModal({
+        title: '取消拉黑',
+        content: '取消后双方可以重新发送消息，确定继续吗？',
+        confirmText: '取消拉黑',
+        success: (res) => resolve(Boolean(res && res.confirm)),
+        fail: () => resolve(false)
+      });
+    });
+    if (!confirm) return;
+
+    const result = await unblockUserApi({
+      conversationId: this.data.conversationId,
+      targetOpenid: this.data.peerOpenid
+    });
+
+    if (result && result.ok) {
+      this.setData({ blocked: false, blockedByMe: false, riskWarning: '' });
+      wx.showToast({ title: '已取消拉黑，可以继续聊天', icon: 'none' });
+      return;
+    }
+
+    const code = result && result.code;
+    let message = (result && result.message) || '取消拉黑失败，请稍后重试';
+    if (code === 'NO_ACTIVE_BLOCK') {
+      message = '你并没有拉黑对方，可能是对方拉黑了你';
+      // 对方拉黑我时按钮没有意义，直接切到「只能等对方解除」的展示
+      this.setData({ blockedByMe: false });
+    }
     wx.showToast({ title: message, icon: 'none' });
   }
 });

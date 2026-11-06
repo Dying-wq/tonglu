@@ -21,11 +21,18 @@
     </view>
   </scroll-view>
 
+  <view wx:if="{{loading}}" class="conv-empty">加载中…</view>
+  <view wx:elif="{{conversations.length === 0}}" class="conv-empty">
+    <view class="conv-empty-title">还没有会话</view>
+    <view class="conv-empty-desc">在首页找到同车次的帖子，点「私信帮 ta」开始聊天</view>
+  </view>
+
   <view
     wx:for="{{conversations}}"
     wx:key="id"
-    class="conversation-card"
+    class="conversation-card {{item.status === 'blocked' ? 'is-blocked' : ''}}"
     data-id="{{item.id}}"
+    data-openid="{{item.peerOpenid}}"
     bindtap="goChat"
   >
     <view class="avatar">{{item.avatarText}}</view>
@@ -37,6 +44,7 @@
       <view class="related">{{item.relatedTitle || '关联内容'}}</view>
       <view class="last">{{item.lastMessage}}</view>
     </view>
-    <view wx:if="{{item.unread}}" class="unread">{{item.unread}}</view>
+    <view wx:if="{{item.status === 'blocked'}}" class="blocked-tag">已拉黑</view>
+    <view wx:elif="{{item.unread}}" class="unread">{{item.unread}}</view>
   </view>
 </view>

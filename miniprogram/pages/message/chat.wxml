@@ -8,10 +8,13 @@
   <view class="tool-row">
     <view class="tool-chip" bindtap="requestWechat">交换微信</view>
     <view class="tool-chip warn" bindtap="reportConversation">举报</view>
-    <view class="tool-chip dark" bindtap="blockUser">拉黑</view>
+    <view wx:if="{{!blocked}}" class="tool-chip dark" bindtap="blockUser">拉黑</view>
+    <view wx:elif="{{blockedByMe}}" class="tool-chip primary" bindtap="unblock">取消拉黑</view>
   </view>
 
-  <view wx:if="{{blocked}}" class="blocked-banner">已拉黑该用户，双方无法继续发送消息</view>
+  <view wx:if="{{blocked}}" class="blocked-banner">
+    {{blockedByMe ? '已拉黑该用户，双方无法继续发送消息' : '对方已将你拉黑，暂时无法发送消息'}}
+  </view>
 
   <scroll-view class="messages" scroll-y>
     <view wx:if="{{loading}}" class="empty-hint">加载中…</view>
@@ -45,7 +48,10 @@
   </view>
 
   <view wx:if="{{blocked}}" class="composer composer-blocked">
-    <view class="composer-disabled">已拉黑，无法发送消息</view>
+    <view class="composer-disabled">
+      {{blockedByMe ? '已拉黑，无法发送消息' : '已被对方拉黑，无法发送消息'}}
+    </view>
+    <view wx:if="{{blockedByMe}}" class="composer-unblock" bindtap="unblock">取消拉黑</view>
   </view>
   <view wx:else class="composer">
     <input placeholder="输入消息" value="{{inputValue}}" bindinput="updateInput" />

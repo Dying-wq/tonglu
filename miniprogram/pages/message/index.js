@@ -1,9 +1,11 @@
-const { conversations } = require('../../utils/mock-data');
 const { getConversationList, getUnreadCount } = require('../../utils/cloud-api');
 
 Page({
   data: {
-    conversations,
+    // 不再用 mock-data 的演示会话兜底：那些「热心大叔」「旅者小李」是写死的假记录，
+    // 点进去没有真实消息，还会让人以为拉黑后会话仍然存在。
+    conversations: [],
+    loading: true,
     tabs: ['全部', '私聊', '订单', '报名', '系统', '举报'],
     activeTab: 0,
     unreadCount: 0
@@ -18,9 +20,9 @@ Page({
       getConversationList(),
       getUnreadCount()
     ]);
-    const finalConversations = nextConversations.length ? nextConversations : conversations;
     this.setData({
-      conversations: finalConversations,
+      conversations: nextConversations || [],
+      loading: false,
       unreadCount
     });
     this.syncTabBadge(unreadCount);
@@ -45,8 +47,12 @@ Page({
   },
 
   goChat(event) {
+    const { id, openid } = event.currentTarget.dataset;
+    // 带上对方 openid：聊天页据此区分「我拉黑了对方」和「对方拉黑了我」，
+    // 只有前者才显示「取消拉黑」按钮。
+    const peer = openid ? `&peerOpenid=${openid}` : '';
     wx.navigateTo({
-      url: `/pages/message/chat?conversationId=${event.currentTarget.dataset.id}`
+      url: `/pages/message/chat?conversationId=${id}${peer}`
     });
   },
 
