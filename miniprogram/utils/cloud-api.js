@@ -145,6 +145,7 @@ async function getPosts(type, trainNo) {
         seatNo: post.seatNo,
         images: post.images || [],
         location: post.location || `${post.trainNo} · ${post.carriageNo}车厢`,
+        publisherOpenid: post.publisherOpenid || '',
         publisherName: (post.publisherInfo && post.publisherInfo.nickname) || '匿名旅客',
         publisherCreditScore: (post.publisherInfo && post.publisherInfo.creditScore) || 60,
         publisherRank: (post.publisherInfo && post.publisherInfo.rankName) || getCreditLevelName(60),

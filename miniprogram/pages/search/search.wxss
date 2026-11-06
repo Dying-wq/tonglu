@@ -77,3 +77,60 @@
   color: #9ca3af;
   font-size: 23rpx;
 }
+
+/* 搜索框内的清空按钮 */
+.search-clear {
+  flex: 0 0 auto;
+  width: 40rpx;
+  height: 40rpx;
+  line-height: 40rpx;
+  text-align: center;
+  border-radius: 50%;
+  background: #e5eaf0;
+  color: #6b7280;
+  font-size: 22rpx;
+}
+
+/* 类型筛选栏：紧贴搜索框下方，第一屏可见 */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.filter-chip {
+  height: 56rpx;
+  padding: 0 28rpx;
+  border-radius: 28rpx;
+  border: 1rpx solid #e5eaf0;
+  background: #ffffff;
+  color: #4b5563;
+  font-size: 26rpx;
+  line-height: 54rpx;
+}
+
+.filter-chip.active {
+  border-color: #1f6feb;
+  background: #1f6feb;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* 空结果状态 */
+.empty-state {
+  margin-top: 80rpx;
+  text-align: center;
+}
+
+.empty-title {
+  color: #6b7280;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.empty-desc {
+  margin-top: 12rpx;
+  color: #9ca3af;
+  font-size: 25rpx;
+}

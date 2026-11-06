@@ -1,10 +1,33 @@
 <view class="page search-page">
   <view class="search-panel">
     <view class="search-icon">⌕</view>
-    <input focus value="{{keyword}}" bindinput="updateKeyword" placeholder="搜索求助、帮助、话题" />
+    <input
+      focus
+      value="{{keyword}}"
+      bindinput="updateKeyword"
+      placeholder="搜索求助内容、用户 ID"
+      confirm-type="search"
+    />
+    <view wx:if="{{keyword}}" class="search-clear" bindtap="clearKeyword">✕</view>
+  </view>
+
+  <!-- 类型筛选：放在搜索框正下方，第一屏可见 -->
+  <view class="filter-row">
+    <view
+      wx:for="{{typeFilters}}"
+      wx:key="key"
+      class="filter-chip {{activeType === item.key ? 'active' : ''}}"
+      data-type="{{item.key}}"
+      bindtap="switchType"
+    >{{item.label}}</view>
   </view>
 
   <view class="result-count">找到 {{results.length}} 条相关内容</view>
+
+  <view wx:if="{{results.length === 0}}" class="empty-state">
+    <view class="empty-title">没有找到相关内容</view>
+    <view class="empty-desc">换个关键词，或切换上方筛选类型试试</view>
+  </view>
 
   <view
     wx:for="{{results}}"
@@ -15,7 +38,7 @@
   >
     <view class="result-top">
       <view class="result-title">{{item.title}}</view>
-      <view class="result-tag">{{item.tagName || '互助'}}</view>
+      <view class="result-tag">{{item.typeLabel}}</view>
     </view>
     <view class="result-desc">{{item.description}}</view>
     <view class="result-meta">{{item.location}} · {{item.publisherName}} · {{item.publisherRank}}</view>
