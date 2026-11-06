@@ -35,6 +35,12 @@ Page({
   onShow() {
     this.loadTrainBinding();
     this.loadPosts();
+    // 首页是默认 tab，回到首页时顺手校准一次消息红点，
+    // 否则未读数只在进消息页时才更新，看着像一直不变
+    const app = getApp();
+    if (app && app.refreshUnreadBadge) {
+      app.refreshUnreadBadge();
+    }
   },
 
   checkPrivacyNotice() {

@@ -92,6 +92,10 @@ exports.main = async (event = {}) => {
     publisherOpenid: openid,
     publisherInfo: {
       nickname: user.nickname || '匿名旅客',
+      // 头像随帖子一起存下来，聊天页和会话列表才有东西可显示；
+      // 微信已收回 getUserProfile，头像只能来自用户自己上传的 avatarUrl
+      avatarText: user.avatarText || (user.nickname || '匿').slice(0, 1),
+      avatarUrl: user.avatarUrl || '',
       creditScore: creditScore,
       rankName: user.creditLevelName || '可信任旅客'
     },

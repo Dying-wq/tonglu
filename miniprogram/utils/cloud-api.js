@@ -291,6 +291,8 @@ async function getPostById(id) {
       location: post.location || `${post.trainNo} · ${post.carriageNo}车厢`,
       publisherOpenid: post.publisherOpenid || '',
       publisherName: (post.publisherInfo && post.publisherInfo.nickname) || '匿名旅客',
+      publisherAvatarText: (post.publisherInfo && post.publisherInfo.avatarText) || '',
+      publisherAvatarUrl: (post.publisherInfo && post.publisherInfo.avatarUrl) || '',
       publisherCreditScore: (post.publisherInfo && post.publisherInfo.creditScore) || 60,
       publisherRank: (post.publisherInfo && post.publisherInfo.rankName) || getCreditLevelName(60),
       status: post.status,
@@ -685,6 +687,7 @@ module.exports = {
   getBlockList,
   getBlockRelations,
   invalidateBlockCache,
+  formatMessageTime,
   getThankWall,
   getAdminDashboard,
   adminUpdateStatus

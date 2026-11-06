@@ -1,4 +1,5 @@
-const { getConversationList, getUnreadCount } = require('../../utils/cloud-api');
+const { getConversationList, getUnreadCount, formatMessageTime } = require('../../utils/cloud-api');
+const { setMessageBadge } = require('../../utils/badge');
 
 Page({
   data: {
@@ -21,23 +22,16 @@ Page({
       getUnreadCount()
     ]);
     this.setData({
-      conversations: nextConversations || [],
+      conversations: (nextConversations || []).map((item) => ({
+        ...item,
+        // 云函数返回的 lastMessageAt 是 Date，经 JSON 序列化后变成
+        // "2026-11-06T04:48:22.483Z" 这种原始字符串，直接显示很难看
+        lastMessageTime: formatMessageTime(item.lastMessageAt)
+      })),
       loading: false,
       unreadCount
     });
-    this.syncTabBadge(unreadCount);
-  },
-
-  syncTabBadge(unreadCount) {
-    if (!wx.setTabBarBadge) return;
-    if (unreadCount > 0) {
-      wx.setTabBarBadge({
-        index: 3,
-        text: unreadCount > 99 ? '99+' : String(unreadCount)
-      });
-      return;
-    }
-    wx.removeTabBarBadge({ index: 3 });
+    setMessageBadge(unreadCount);
   },
 
   selectTab(event) {
@@ -47,12 +41,19 @@ Page({
   },
 
   goChat(event) {
-    const { id, openid } = event.currentTarget.dataset;
-    // 带上对方 openid：聊天页据此区分「我拉黑了对方」和「对方拉黑了我」，
-    // 只有前者才显示「取消拉黑」按钮。
-    const peer = openid ? `&peerOpenid=${openid}` : '';
+    const { id, openid, name, avatar, avatarUrl } = event.currentTarget.dataset;
+    // 把对方身份一并带过去：
+    // peerOpenid 用来区分「我拉黑了对方」和「对方拉黑了我」，
+    // 名字和头像用来在聊天页顶部显示「正在和谁聊」。
+    const query = [
+      `conversationId=${id}`,
+      openid ? `peerOpenid=${encodeURIComponent(openid)}` : '',
+      name ? `peerName=${encodeURIComponent(name)}` : '',
+      avatar ? `peerAvatarText=${encodeURIComponent(avatar)}` : '',
+      avatarUrl ? `peerAvatarUrl=${encodeURIComponent(avatarUrl)}` : ''
+    ].filter(Boolean).join('&');
     wx.navigateTo({
-      url: `/pages/message/chat?conversationId=${id}${peer}`
+      url: `/pages/message/chat?${query}`
     });
   },
 

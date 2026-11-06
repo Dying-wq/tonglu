@@ -58,6 +58,27 @@ exports.main = async (event = {}) => {
   }
 
   const publisherName = post.publisherInfo && post.publisherInfo.nickname ? post.publisherInfo.nickname : '发布者';
+
+  // 会话里必须同时记住双方的显示信息。
+  // 只存一个 peerName 的话，它只能对其中一方正确——发布者打开会话会看到自己的名字。
+  const initiatorRes = await db.collection('users').where({ openid }).limit(1).get();
+  const initiator = initiatorRes.data[0] || {};
+  const initiatorName = initiator.nickname || '旅者';
+  const participantInfo = {
+    [publisherOpenid]: {
+      name: publisherName,
+      avatarText: (post.publisherInfo && post.publisherInfo.avatarText) || publisherName.slice(0, 1),
+      avatarUrl: (post.publisherInfo && post.publisherInfo.avatarUrl) || '',
+      rankName: (post.publisherInfo && post.publisherInfo.rankName) || '青铜'
+    },
+    [openid]: {
+      name: initiatorName,
+      avatarText: initiator.avatarText || initiatorName.slice(0, 1),
+      avatarUrl: initiator.avatarUrl || '',
+      rankName: initiator.creditLevelName || initiator.rankName || '青铜'
+    }
+  };
+
   const lastMessage = `${getContactRole(post.type)}会话已创建，可以开始沟通细节。`;
   const result = await db.collection('conversations').add({
     data: {
@@ -67,6 +88,7 @@ exports.main = async (event = {}) => {
       orderId: order ? order._id : event.orderId || '',
       participantIds,
       participantOpenids: participantIds,
+      participantInfo,
       publisherOpenid,
       peerName: publisherName,
       peerAvatarText: publisherName.slice(0, 1),

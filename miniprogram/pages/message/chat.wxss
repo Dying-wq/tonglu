@@ -7,34 +7,70 @@
   box-sizing: border-box;
 }
 
-.linked-post {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  padding: 22rpx;
+/* 顶部「正在和谁聊」：头像 + 名字 + 关联内容 */
+.peer-bar {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 20rpx 22rpx;
   border: 1rpx solid #dbeafe;
   border-radius: 8rpx;
   background: #eff6ff;
 }
 
-.linked-kicker {
-  color: #1d4ed8;
-  font-size: 22rpx;
+.peer-avatar {
+  flex: 0 0 auto;
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 8rpx;
+  background: #1f6feb;
+  color: #ffffff;
+  text-align: center;
+  line-height: 84rpx;
+  font-size: 34rpx;
   font-weight: 900;
 }
 
-.linked-title {
-  margin-top: 8rpx;
+.peer-avatar-img {
+  display: block;
+  background: #e5eaf0;
+}
+
+.peer-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.peer-name {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
   color: #111827;
   font-size: 30rpx;
   font-weight: 900;
   line-height: 1.3;
 }
 
-.linked-meta {
+.peer-blocked-tag {
+  flex: 0 0 auto;
+  padding: 0 10rpx;
+  height: 32rpx;
+  border-radius: 16rpx;
+  background: #fef2f2;
+  border: 1rpx solid #fecaca;
+  color: #b91c1c;
+  line-height: 30rpx;
+  font-size: 19rpx;
+  font-weight: 800;
+}
+
+.peer-sub {
   margin-top: 8rpx;
   color: #64748b;
   font-size: 23rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tool-row {

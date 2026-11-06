@@ -12,6 +12,17 @@ const {
   sendMessage,
   unblockUser: unblockUserApi
 } = require('../../utils/cloud-api');
+const { applyUnreadCount } = require('../../utils/badge');
+
+// URL 参数里的中文/头像地址是 encodeURIComponent 过的，解不开时按原值用
+function decodeParam(value) {
+  if (!value) return '';
+  try {
+    return decodeURIComponent(value);
+  } catch (error) {
+    return String(value);
+  }
+}
 
 Page({
   data: {
@@ -19,6 +30,11 @@ Page({
     // 用假 id 去查消息只会拿到空结果，掩盖真实问题。
     conversationId: '',
     post: null,
+    // 对方的显示信息：从会话列表进入时由 URL 带过来，
+    // 从帖子进入时取帖子发布者，保证顶部显示的是「对方」而不是自己
+    peerName: '',
+    peerAvatarText: '',
+    peerAvatarUrl: '',
     // 不再回退 mock-data 的演示消息：假消息会显示成「30 分钟前」这类
     // 固定时间，让用户误以为是真实聊天记录。
     messages: [],
@@ -42,6 +58,11 @@ Page({
     this.pollingTimer = setInterval(() => this.loadMessages(false), 3000);
   },
 
+  onShow() {
+    // 从后台切回来时补一次已读：这期间可能有新消息进来
+    this.markReadAndSyncBadge();
+  },
+
   onUnload() {
     clearInterval(this.pollingTimer);
   },
@@ -50,7 +71,11 @@ Page({
     await login();
     let conversationId = options.conversationId || '';
     let post = null;
-    let peerOpenid = options.peerOpenid || '';
+    let peerOpenid = decodeParam(options.peerOpenid);
+    let peerName = decodeParam(options.peerName);
+    let peerAvatarText = decodeParam(options.peerAvatarText);
+    let peerAvatarUrl = decodeParam(options.peerAvatarUrl);
+
     if (options.postId) {
       post = await getPostById(options.postId);
       const result = await createOrGetConversation({
@@ -59,16 +84,40 @@ Page({
         postId: options.postId
       });
       conversationId = (result && result.conversationId) || conversationId;
+      // 从帖子进来时，对方就是发布者
       peerOpenid = peerOpenid || (post && post.publisherOpenid) || '';
+      peerName = peerName || (post && post.publisherName) || '';
+      peerAvatarText = peerAvatarText || (post && post.publisherAvatarText) || '';
+      peerAvatarUrl = peerAvatarUrl || (post && post.publisherAvatarUrl) || '';
     }
-    this.setData({ conversationId, post, peerOpenid });
+
+    this.setData({
+      conversationId,
+      post,
+      peerOpenid,
+      peerName,
+      peerAvatarText: peerAvatarText || peerName.slice(0, 1),
+      peerAvatarUrl
+    });
     if (conversationId) {
-      await markConversationRead(conversationId);
+      // 进会话即已读，并同步把 tabBar 红点减掉——
+      // 原来只标记已读不刷角标，用户回到首页红点还是原数字，看着像没生效
+      await this.markReadAndSyncBadge();
     }
     // 先判定拉黑状态，再拉消息：已拉黑的会话要直接显示禁用态，
     // 而不是让用户打一行字、点发送，才被云端告知发不出去。
     await this.refreshBlockState();
     this.loadMessages(true);
+  },
+
+  // 标记当前会话已读，并用云端返回的最新总未读数刷新 tabBar 角标
+  async markReadAndSyncBadge() {
+    const conversationId = this.data.conversationId;
+    if (!conversationId) return;
+    const result = await markConversationRead(conversationId);
+    if (result && result.ok) {
+      applyUnreadCount(result.unreadCount);
+    }
   },
 
   // 从 blocks 集合反查当前会话的拉黑方向。
@@ -92,12 +141,21 @@ Page({
       return;
     }
     const nextMessages = await getMessageList(this.data.conversationId);
+    const list = nextMessages || [];
+    // 页面开着的时候对方又发了消息，立刻再标一次已读：
+    // 否则未读数会一直涨，用户明明在看却被红点追着。
+    // 首次加载不算「新消息」——initChat 里已经标过已读了，不必重复调。
+    const grew = this.messagesInitialized && list.length > this.data.messages.length;
     this.setData({
       // 云端没有消息就是空列表，由页面显示空状态
-      messages: nextMessages || [],
+      messages: list,
       loading: false,
       pollingText: showConnected ? '已连接' : ''
     });
+    this.messagesInitialized = true;
+    if (grew && list.length) {
+      this.markReadAndSyncBadge();
+    }
   },
 
   goPost() {

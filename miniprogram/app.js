@@ -1,5 +1,6 @@
 const { CLOUD_ENV_ID } = require('./config');
 const { createPost } = require('./utils/cloud-api');
+const { refreshMessageBadge } = require('./utils/badge');
 const {
   readPendingPosts,
   writePendingPosts,
@@ -102,16 +103,7 @@ App({
   },
 
   refreshUnreadBadge() {
-    if (!this.globalData.cloudReady || !wx.cloud || !wx.setTabBarBadge) return;
-    wx.cloud.callFunction({ name: 'getUnreadCount' })
-      .then((res) => {
-        const count = res.result && res.result.ok ? res.result.unreadCount : 0;
-        if (count > 0) {
-          wx.setTabBarBadge({ index: 3, text: count > 99 ? '99+' : String(count) });
-        } else {
-          wx.removeTabBarBadge({ index: 3 });
-        }
-      })
-      .catch(() => {});
+    if (!this.globalData.cloudReady || !wx.cloud) return Promise.resolve(0);
+    return refreshMessageBadge();
   }
 });

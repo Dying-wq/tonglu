@@ -191,3 +191,9 @@
   font-size: 25rpx;
   line-height: 1.6;
 }
+
+/* 真实头像（用户自己上传的），没有时才回退到文字头像 */
+.avatar.avatar-img {
+  background: #e5eaf0;
+  display: block;
+}
