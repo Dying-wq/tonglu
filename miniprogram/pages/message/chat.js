@@ -2,8 +2,7 @@ const { detectRiskKeywords } = require('../../utils/risk');
 const {
   blockUser: blockUserApi,
   createOrGetConversation,
-  getBlockRelations,
-  getMessageList,
+  getChatState,
   getPostById,
   login,
   markConversationRead,
@@ -49,6 +48,8 @@ Page({
     blockedByMe: false,
     // 对方 openid：从会话列表进入时由 query 传入，从帖子进入时取帖子发布者
     peerOpenid: '',
+    // 云函数版本不匹配时的开发提示（正常部署时始终为空，不会出现在正式界面）
+    deployHint: '',
     loading: true,
     quickReplies: ['我可以，现在方便沟通吗？', '请问具体时间和地点是？', '我已到附近，稍等一下。']
   },
@@ -104,10 +105,9 @@ Page({
       // 原来只标记已读不刷角标，用户回到首页红点还是原数字，看着像没生效
       await this.markReadAndSyncBadge();
     }
-    // 先判定拉黑状态，再拉消息：已拉黑的会话要直接显示禁用态，
-    // 而不是让用户打一行字、点发送，才被云端告知发不出去。
-    await this.refreshBlockState();
-    this.loadMessages(true);
+    // 拉黑状态、对方身份都由 getMessageList 一并返回，
+    // 不再依赖 URL 里的 peerOpenid 或额外的拉黑名单云函数。
+    await this.loadMessages(true);
   },
 
   // 标记当前会话已读，并用云端返回的最新总未读数刷新 tabBar 角标
@@ -120,39 +120,48 @@ Page({
     }
   },
 
-  // 从 blocks 集合反查当前会话的拉黑方向。
-  // 云端不返回拉黑状态（conversations.status 只有 blocked/active，
-  // 分不清是谁拉黑了谁），所以这里用双向名单比对。
-  async refreshBlockState() {
-    const peer = this.data.peerOpenid;
-    if (!peer) return;
-    const relations = await getBlockRelations();
-    const blockedByMe = relations.blockedOpenids.indexOf(peer) !== -1;
-    const blockedByPeer = relations.blockedByOpenids.indexOf(peer) !== -1;
-    this.setData({
-      blocked: blockedByMe || blockedByPeer,
-      blockedByMe
-    });
-  },
-
   async loadMessages(showConnected) {
     if (!this.data.conversationId) {
       this.setData({ messages: [], loading: false, pollingText: '' });
       return;
     }
-    const nextMessages = await getMessageList(this.data.conversationId);
-    const list = nextMessages || [];
+
+    const state = await getChatState(this.data.conversationId);
+    const list = state.messages || [];
+
     // 页面开着的时候对方又发了消息，立刻再标一次已读：
     // 否则未读数会一直涨，用户明明在看却被红点追着。
     // 首次加载不算「新消息」——initChat 里已经标过已读了，不必重复调。
     const grew = this.messagesInitialized && list.length > this.data.messages.length;
-    this.setData({
-      // 云端没有消息就是空列表，由页面显示空状态
+
+    const patch = {
       messages: list,
       loading: false,
-      pollingText: showConnected ? '已连接' : ''
-    });
+      pollingText: showConnected ? '已连接' : '',
+      blocked: state.blocked,
+      blockedByMe: state.blockedByMe
+    };
+
+    // 对方身份以服务端为准：从会话列表进来时 URL 带的名字可能已经过期
+    if (state.peer && state.peer.name) {
+      patch.peerOpenid = state.peerOpenid;
+      patch.peerName = state.peer.name;
+      patch.peerAvatarText = state.peer.avatarText || state.peer.name.slice(0, 1);
+      patch.peerAvatarUrl = state.peer.avatarUrl || '';
+    }
+
+    // 云函数还是旧版本时明确提示，避免被误认为「功能没做」
+    patch.deployHint = state.needsRedeploy
+      ? '云函数 getMessageList 尚未更新到最新版本，拉黑状态无法读取，请重新上传部署。'
+      : '';
+
+    this.setData(patch);
     this.messagesInitialized = true;
+
+    if (state.error && state.offline) {
+      this.setData({ pollingText: '云服务未连接' });
+    }
+
     if (grew && list.length) {
       this.markReadAndSyncBadge();
     }
@@ -209,8 +218,8 @@ Page({
       if (code === 'CONVERSATION_BLOCKED') {
         message = '该会话已被拉黑，无法继续发送';
         this.setData({ blocked: true });
-        // 顺便查一次拉黑方向，好把按钮显示成「取消拉黑」还是「等待对方解除」
-        this.refreshBlockState();
+        // 拉一次会话状态，把按钮切成「取消拉黑」或「等待对方解除」
+        this.loadMessages(false);
       } else if (result && result.offline) {
         message = '云服务未连接，消息未发送';
       }
@@ -278,9 +287,14 @@ Page({
       return;
     }
 
-    // 拉黑失败要说清原因：常见是 blocks 集合未创建
+    // 拉黑失败要说清原因：常见是 blocks 集合未创建或 blockUser 未部署
     const message = (result && result.message) || '拉黑失败，请检查 blocks 集合是否已创建';
-    wx.showToast({ title: message, icon: 'none' });
+    wx.showModal({
+      title: '拉黑未成功',
+      content: message,
+      showCancel: false,
+      confirmText: '知道了'
+    });
   },
 
   // 取消拉黑：恢复 blocks 记录与会话状态，双方可以重新发消息。
@@ -297,24 +311,34 @@ Page({
     });
     if (!confirm) return;
 
+    // 只传 conversationId，让对方身份由云端从会话参与者里推出来。
+    // 前端传 targetOpenid 一旦过期就会解除错人，这个判断放在服务端更安全。
     const result = await unblockUserApi({
-      conversationId: this.data.conversationId,
-      targetOpenid: this.data.peerOpenid
+      conversationId: this.data.conversationId
     });
 
     if (result && result.ok) {
-      this.setData({ blocked: false, blockedByMe: false, riskWarning: '' });
+      this.setData({ blocked: false, blockedByMe: false, inputValue: '', riskWarning: '' });
       wx.showToast({ title: '已取消拉黑，可以继续聊天', icon: 'none' });
+      // 再从服务端拉一次，确认状态真的恢复了（而不是只改了本地变量）
+      this.loadMessages(false);
       return;
     }
 
     const code = result && result.code;
     let message = (result && result.message) || '取消拉黑失败，请稍后重试';
     if (code === 'NO_ACTIVE_BLOCK') {
-      message = '你并没有拉黑对方，可能是对方拉黑了你';
-      // 对方拉黑我时按钮没有意义，直接切到「只能等对方解除」的展示
+      message = '你并没有拉黑对方，是对方拉黑了你，需要对方解除。';
       this.setData({ blockedByMe: false });
     }
-    wx.showToast({ title: message, icon: 'none' });
+
+    // 用弹窗而不是 toast：云函数未部署时的提示比较长，toast 会被截断，
+    // 用户只能看到「取消拉黑失败」，无法判断到底卡在哪一步。
+    wx.showModal({
+      title: '取消拉黑未成功',
+      content: message,
+      showCancel: false,
+      confirmText: '知道了'
+    });
   }
 });

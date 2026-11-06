@@ -21,6 +21,8 @@
     </view>
   </view>
 
+  <view wx:if="{{deployHint}}" class="deploy-hint">{{deployHint}}</view>
+
   <view class="tool-row">
     <view class="tool-chip" bindtap="requestWechat">交换微信</view>
     <view class="tool-chip warn" bindtap="reportConversation">举报</view>

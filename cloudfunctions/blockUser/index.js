@@ -30,9 +30,17 @@ exports.main = async (event = {}) => {
     }
   });
   if (event.conversationId) {
+    // 把「是谁拉黑的」记在会话上。
+    // 只写 status: 'blocked' 的话，聊天页没法判断该显示「取消拉黑」
+    // 还是「等待对方解除」，只能再查一次 blocks 集合。
     await db.collection('conversations').doc(event.conversationId).update({
-      data: { status: 'blocked', updatedAt: db.serverDate() }
+      data: {
+        status: 'blocked',
+        blockedBy: openid,
+        blockedAt: db.serverDate(),
+        updatedAt: db.serverDate()
+      }
     });
   }
-  return { ok: true, blockId: result._id };
+  return { ok: true, blockId: result._id, targetOpenid };
 };

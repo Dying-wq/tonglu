@@ -72,3 +72,57 @@ test('chat page refreshes the tabBar badge after marking messages read', () => {
     '聊天页标记已读后没有同步 tabBar 角标，看完消息红点还是原数字'
   );
 });
+
+// 「取消拉黑」曾经依赖两个前置条件：getBlockList 云函数已部署、
+// 以及从会话列表带过来的 peerOpenid。任缺一个按钮就不出现，
+// 表现就是「取消拉黑没做」。现在改为由 getMessageList 一并返回状态。
+test('getMessageList returns the block state so the chat page is self-contained', () => {
+  const source = readCloudFunction('getMessageList');
+  ['blockedByMe', 'blockedByPeer', 'blocked'].forEach((field) => {
+    assert.equal(
+      source.includes(field),
+      true,
+      `getMessageList 没有返回 ${field}，聊天页只能靠 URL 参数猜拉黑方向`
+    );
+  });
+  assert.equal(
+    source.includes('peer'),
+    true,
+    'getMessageList 没有返回对方信息，聊天页顶部只能显示占位文字'
+  );
+});
+
+test('chat page does not depend on getBlockList to decide the unblock button', () => {
+  const chatJs = fs.readFileSync(
+    path.join(ROOT, 'miniprogram', 'pages', 'message', 'chat.js'),
+    'utf8'
+  );
+  assert.equal(
+    chatJs.includes('getBlockRelations'),
+    false,
+    '聊天页又用回了 getBlockList 查拉黑方向，少部署一个云函数按钮就消失'
+  );
+  assert.equal(
+    chatJs.includes('getChatState'),
+    true,
+    '聊天页没有从 getMessageList 的返回值里取拉黑状态'
+  );
+});
+
+test('blockUser records who blocked on the conversation', () => {
+  const source = readCloudFunction('blockUser');
+  assert.equal(
+    source.includes('blockedBy'),
+    true,
+    'blockUser 没有在会话上记录 blockedBy，聊天页分不清是谁拉黑的'
+  );
+});
+
+test('unblockUser clears the blockedBy marker', () => {
+  const source = readCloudFunction('unblockUser');
+  assert.equal(
+    source.includes("blockedBy: ''"),
+    true,
+    'unblockUser 没有清掉 blockedBy，取消拉黑后聊天页仍显示被拉黑'
+  );
+});

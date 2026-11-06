@@ -15,16 +15,18 @@ exports.main = async (event = {}) => {
     return { ok: false, code: 'TARGET_REQUIRED', message: '缺少取消拉黑的对象。' };
   }
 
-  // 只给了会话 id 时，从会话参与者里推断对方
-  if (!targetOpenid && conversationId) {
+  // 先读会话：既能推断对方是谁，也能判断会话当前是否真的处于拉黑状态
+  let conversation = null;
+  if (conversationId) {
     try {
-      const conversation = await db.collection('conversations').doc(conversationId).get();
-      const ids = conversation.data.participantIds
-        || conversation.data.participantOpenids
-        || [];
-      targetOpenid = ids.find((id) => id !== openid) || '';
+      const doc = await db.collection('conversations').doc(conversationId).get();
+      conversation = doc.data || {};
     } catch (error) {
       return { ok: false, code: 'CONVERSATION_NOT_FOUND', message: '会话不存在或无权访问。' };
+    }
+    const ids = conversation.participantIds || conversation.participantOpenids || [];
+    if (!targetOpenid) {
+      targetOpenid = ids.find((id) => id !== openid) || '';
     }
   }
 
@@ -57,26 +59,37 @@ exports.main = async (event = {}) => {
     };
   }
 
-  // 一条都没更新，说明当前用户并没有拉黑对方。
-  // 最常见的情况是「对方拉黑了我」——此时不该假装成功，
-  // 也不该去恢复会话状态，否则会误报「已取消拉黑」但消息依然发不出去。
-  if (updated === 0) {
+  // 会话当前是否处于拉黑状态，以及是不是我拉黑的
+  const conversationBlocked = Boolean(conversation) && conversation.status === 'blocked';
+  const blockedBy = (conversation && conversation.blockedBy) || '';
+  const blockedByMe = conversationBlocked && (!blockedBy || blockedBy === openid);
+
+  // 一条拉黑记录都没更新，且会话也不是我拉黑的状态 → 确实是对方拉黑了我
+  if (updated === 0 && !blockedByMe) {
     return {
       ok: false,
       code: 'NO_ACTIVE_BLOCK',
       targetOpenid,
-      message: '没有找到你对该用户的拉黑记录，可能是对方拉黑了你，需要对方解除。'
+      message: '没有找到你对该用户的拉黑记录，是对方拉黑了你，需要对方解除。'
     };
   }
 
-  // 恢复会话为正常状态，双方可以继续发消息
+  // 恢复会话为正常状态，双方可以继续发消息。
+  // 这里同时覆盖「blocks 里没有记录、但会话被标记为 blocked」的脏数据：
+  // 早期版本拉黑时只改了会话状态，blocks 写入可能失败，
+  // 如果死等 blocks 记录，用户就永远取消不掉。
   if (conversationId) {
     try {
       await db.collection('conversations').doc(conversationId).update({
-        data: { status: 'active', updatedAt: db.serverDate() }
+        data: {
+          status: 'active',
+          // 清掉「谁拉黑的」标记，否则聊天页会一直认为会话处于拉黑状态
+          blockedBy: '',
+          unblockedAt: db.serverDate(),
+          updatedAt: db.serverDate()
+        }
       });
     } catch (error) {
-      // 会话恢复失败不影响拉黑记录本身的解除，如实返回
       return {
         ok: true,
         updated,

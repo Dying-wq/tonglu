@@ -388,31 +388,66 @@ async function getConversationList() {
 }
 
 async function getMessages(conversationId) {
-  return getMessageList(conversationId);
+  const state = await getChatState(conversationId);
+  return state.messages;
 }
 
-async function getMessageList(conversationId) {
-  // 没有会话 id 就没有消息，不能回退演示数据：
-  // 假消息会带着「30 分钟前」这类固定时间，让用户误以为是真实聊天记录。
-  if (!conversationId) {
-    return [];
-  }
+// 会话状态 + 消息一起取。
+// 聊天页需要的不只是消息，还有「对方是谁」「是否被拉黑、谁拉黑的」，
+// 这些都由服务端算好，前端不再拼 URL 参数、也不再额外调拉黑名单云函数。
+async function getChatState(conversationId) {
+  const empty = {
+    messages: [],
+    peer: null,
+    peerOpenid: '',
+    blocked: false,
+    blockedBy: '',
+    blockedByMe: false,
+    blockedByPeer: false,
+    offline: false,
+    error: '',
+    needsRedeploy: false
+  };
+
+  if (!conversationId) return empty;
   if (!getCloudReady()) {
-    return [];
+    return { ...empty, offline: true };
   }
 
   try {
     const res = await callFunction('getMessageList', { conversationId });
-    if (res.result && res.result.ok) {
-      return (res.result.messages || []).map(normalizeMessage);
+    const result = res.result || {};
+    if (!result.ok) {
+      console.warn('getMessageList 返回异常：', result);
+      return {
+        ...empty,
+        offline: Boolean(result.offline),
+        error: result.message || '读取会话失败'
+      };
     }
-    console.warn('getMessageList 返回异常，已返回空消息列表');
-    return [];
+    return {
+      messages: (result.messages || []).map(normalizeMessage),
+      peer: result.peer || null,
+      peerOpenid: result.peerOpenid || '',
+      blocked: Boolean(result.blocked),
+      blockedBy: result.blockedBy || '',
+      blockedByMe: Boolean(result.blockedByMe),
+      blockedByPeer: Boolean(result.blockedByPeer),
+      offline: false,
+      error: '',
+      // 云端还返回旧结构（没有 blocked 字段）说明云函数没重新部署。
+      // 不提示的话，表现就是「取消拉黑按钮怎么都不出现」，很难排查。
+      needsRedeploy: typeof result.blocked === 'undefined'
+    };
   } catch (error) {
-    // 云开发就绪后不再回退演示消息，避免假数据掩盖真实错误
-    console.warn('读取消息列表失败，已返回空列表：', error);
-    return [];
+    console.warn('读取会话失败：', error);
+    return { ...empty, offline: true, error: '读取会话失败' };
   }
+}
+
+async function getMessageList(conversationId) {
+  const state = await getChatState(conversationId);
+  return state.messages;
 }
 
 // 把云端返回的消息整理成页面直接可用的结构。
@@ -667,6 +702,7 @@ module.exports = {
   getConversationList,
   getMessages,
   getMessageList,
+  getChatState,
   markConversationRead,
   getUnreadCount,
   getOrderById,

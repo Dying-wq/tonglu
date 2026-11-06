@@ -263,3 +263,15 @@
   font-weight: 800;
   text-align: center;
 }
+
+/* 云函数版本不匹配时的开发提示，正常部署时不会出现 */
+.deploy-hint {
+  margin: 14rpx 0 0;
+  padding: 14rpx 18rpx;
+  border-radius: 8rpx;
+  background: #fffbeb;
+  border: 1rpx solid #fde68a;
+  color: #92400e;
+  font-size: 23rpx;
+  line-height: 1.6;
+}
