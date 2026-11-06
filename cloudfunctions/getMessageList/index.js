@@ -60,8 +60,11 @@ exports.main = async (event = {}) => {
   let blocked = conversation.status === 'blocked';
   let blockedBy = conversation.blockedBy || '';
 
-  // 老数据没有 blockedBy 字段，查一次 blocks 补上
-  if (blocked && !blockedBy && peerOpenid) {
+  // 会话状态可能是脏的：早期版本只改 status 不写 blocks，
+  // 或者 blocks 里还有记录但 status 被改回了 active。
+  // 只要状态不明确（没被标记拉黑、或不知道是谁拉黑的）就以 blocks 为准再查一次。
+  const needBlockCheck = Boolean(peerOpenid) && (!blocked || !blockedBy);
+  if (needBlockCheck) {
     try {
       const blockRes = await db.collection('blocks')
         .where(_.or([
@@ -70,27 +73,13 @@ exports.main = async (event = {}) => {
         ]))
         .limit(1)
         .get();
-      if (blockRes.data && blockRes.data.length) {
-        blockedBy = blockRes.data[0].blockerId || blockRes.data[0].blockerOpenid || '';
-      }
-    } catch (error) {
-      // blocks 集合不可读时保持 blockedBy 为空，下面会按「可能是我拉黑的」处理
-    }
-  }
-
-  // 会话状态已恢复、但 blocks 里仍有对方拉黑我的记录（互相拉黑后单方取消）
-  if (!blocked && peerOpenid) {
-    try {
-      const blockRes = await db.collection('blocks')
-        .where({ blockerId: peerOpenid, targetId: openid, status: 'active' })
-        .limit(1)
-        .get();
-      if (blockRes.data && blockRes.data.length) {
+      const record = (blockRes.data && blockRes.data[0]) || null;
+      if (record) {
         blocked = true;
-        blockedBy = peerOpenid;
+        blockedBy = record.blockerId || record.blockerOpenid || blockedBy;
       }
     } catch (error) {
-      // 忽略
+      // blocks 集合不可读时只能依赖会话状态，不让它把整个会话拖垮
     }
   }
 
