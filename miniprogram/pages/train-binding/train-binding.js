@@ -17,6 +17,9 @@ Page({
     seatNo: '',
     currentBinding: null,
     submitting: false,
+    // 是否处于「修改绑定」编辑态。
+    // 已绑定且未点「修改绑定」时为 false，此时表单锁定，避免用户误以为改了立刻生效。
+    editing: false,
     // 到达时间（选填）：填了按真实车程算，不填按车次类型估
     arrivalDate: '',
     arrivalTime: '',
@@ -57,6 +60,8 @@ Page({
     if (binding) {
       this.setData({
         currentBinding: binding,
+        // 已有绑定：默认锁定表单，必须点「修改绑定」才可编辑
+        editing: false,
         trainNo: binding.trainNo || '',
         carriageNo: binding.carriageNo || '',
         seatNo: binding.seatNo || '',
@@ -67,9 +72,35 @@ Page({
       });
       this.refreshArrivalHint(binding.trainNo);
     } else {
-      this.setData({ currentBinding: null, bindingRemaining: '', arrivalText: '' });
+      this.setData({
+        currentBinding: null,
+        // 未绑定：直接可编辑
+        editing: true,
+        bindingRemaining: '',
+        arrivalText: ''
+      });
       this.refreshArrivalHint(this.data.trainNo);
     }
+  },
+
+  // 点「修改绑定」：解锁表单
+  startEdit() {
+    this.setData({ editing: true });
+  },
+
+  // 点「取消修改」：放弃本次编辑，恢复为已保存的绑定信息
+  cancelEdit() {
+    // loadCurrentBinding 会用 globalData 里的绑定覆盖表单，并置 editing 为 false
+    this.loadCurrentBinding();
+  },
+
+  // 底部按钮统一入口：未锁定 → 提交；已锁定 → 解锁进入编辑
+  onSubmitTap() {
+    if (this.data.currentBinding && !this.data.editing) {
+      this.startEdit();
+      return;
+    }
+    this.submitBinding();
   },
 
   updateField(event) {
@@ -150,6 +181,8 @@ Page({
       }
 
       wx.showToast({ title: '车次绑定成功', icon: 'success' });
+      // 保存成功后回到锁定态，避免用户继续误改
+      this.setData({ editing: false });
 
       setTimeout(() => {
         wx.navigateBack();
@@ -168,14 +201,22 @@ Page({
   },
 
   async unbind() {
-    const res = await wx.showModal({
-      title: '解除绑定',
-      content: '确定要解除当前车次绑定吗？解除后将无法看到同车次信息。',
-      confirmText: '解除',
-      confirmColor: '#EB5757'
+    // 用回调式包装成 Promise。
+    // 直接 await wx.showModal 在部分基础库下不返回 { confirm, cancel } 结构，
+    // 会导致 res.confirm 抛异常、整个函数静默失败（表现为「点了没反应」）。
+    // 项目内其他 4 处 showModal 均为回调式，此处保持一致。
+    const confirmed = await new Promise((resolve) => {
+      wx.showModal({
+        title: '解除绑定',
+        content: '确定要解除当前车次绑定吗？解除后将无法看到同车次信息。',
+        confirmText: '解除',
+        confirmColor: '#EB5757',
+        success: (res) => resolve(Boolean(res && res.confirm)),
+        fail: () => resolve(false)
+      });
     });
 
-    if (res.confirm) {
+    if (confirmed) {
       try {
         await unbindTrain();
       } catch (error) {
@@ -185,6 +226,8 @@ Page({
       getApp().setTrainBinding(null);
       this.setData({
         currentBinding: null,
+        // 解绑后表单回到可编辑状态，方便重新绑定
+        editing: true,
         trainNo: '',
         carriageNo: '',
         seatNo: '',

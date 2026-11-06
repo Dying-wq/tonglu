@@ -169,6 +169,42 @@
   line-height: 1.8;
 }
 
-.submit-btn {
+.submit-area {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
   margin: 0 28rpx;
+}
+
+.submit-area .submit-btn {
+  flex: 2;
+  margin: 0;
+}
+
+.submit-area .cancel-btn {
+  flex: 1;
+}
+
+/* 已绑定未进入编辑态时的提示条 */
+.form-locked-hint {
+  margin-bottom: 20rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 8rpx;
+  background: #eff6ff;
+  border: 1rpx solid #bfdbfe;
+  font-size: 24rpx;
+  color: #1d4ed8;
+  line-height: 1.6;
+}
+
+/* 锁定态：输入框与时间选择器视觉上明确不可编辑 */
+.form-input.is-locked,
+.arrival-picker.is-locked {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+}
+
+.arrival-picker.is-locked.placeholder {
+  color: #c4c9d1;
 }

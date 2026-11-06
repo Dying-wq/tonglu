@@ -68,18 +68,19 @@ test('falls back to the train estimate when manual arrival is invalid', () => {
   );
 });
 
-test('clamps manual arrival times into the allowed window', () => {
+test('keeps manual arrival time as-is without clamping', () => {
   const departTs = new Date(2026, 9, 26, 8, 0, 0, 0).getTime();
 
-  // 超过 24 小时按 24 小时算
+  // 长途列车（超过 24 小时）保留用户填写的时间，不被截断
+  // 如 Z264 广州-拉萨约 55 小时
   assert.equal(
-    resolveArrivalTs({ trainNo: 'G1', departTs, arrivalTs: departTs + 40 * HOUR_MS }),
-    departTs + MAX_DURATION_MS
+    resolveArrivalTs({ trainNo: 'Z264', departTs, arrivalTs: departTs + 40 * HOUR_MS }),
+    departTs + 40 * HOUR_MS
   );
-  // 不足 30 分钟按 30 分钟算
+  // 短时间（不足 30 分钟）同样保留，用于验证「到站自动解绑」
   assert.equal(
     resolveArrivalTs({ trainNo: 'G1', departTs, arrivalTs: departTs + 5 * MINUTE_MS }),
-    departTs + 30 * MINUTE_MS
+    departTs + 5 * MINUTE_MS
   );
 });
 

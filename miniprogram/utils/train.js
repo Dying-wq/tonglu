@@ -74,13 +74,18 @@ function parseArrivalInput(dateStr, timeStr) {
 }
 
 // 解析最终使用的到达时间戳
-// 用户填的到达时间如果早于发车时间（或格式无效），退回到估算时长
+// 用户手动填写的到达时间直接采用，不做上下限截断：
+//   1. 这是用户的明确意图，静默修改会造成「我填的时间被改掉了」的困惑；
+//   2. 30 分钟下限会让「快到站」和「验证到站自动解绑」的场景无法成立；
+//   3. 24 小时上限会截断长途列车（如 Z264 广州-拉萨约 55 小时）。
+// 合理性检查（必须晚于当前时间）由调用方在提交前完成。
+// 只有「未填」或「早于发车时间」时才退回到按车次估算，估算值仍做区间约束。
 function resolveArrivalTs({ trainNo, departTs = Date.now(), arrivalTs = 0 } = {}) {
   const depart = Number(departTs) || Date.now();
   const manual = Number(arrivalTs) || 0;
 
   if (manual > depart) {
-    return depart + clampDuration(manual - depart);
+    return manual;
   }
 
   return depart + estimateDurationMs(trainNo);
