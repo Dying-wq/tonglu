@@ -23,6 +23,16 @@
 
   <view wx:if="{{deployHint}}" class="deploy-hint">{{deployHint}}</view>
 
+  <!-- 单账号自测：会话里只有自己，peerOpenid 为空，页面显示默认的「同车旅客」。
+       这时没有真实的拉黑对象，完整验证必须换第二个账号。 -->
+  <view wx:if="{{selfOnly}}" class="deploy-hint">自测会话：这条会话里只有你自己（对方 openid 为空），拉黑 / 取消拉黑要用第二个账号才能完整验证。</view>
+
+  <!-- 订单会话直接给出去订单确认页的入口，发布者不用再回消息页找 -->
+  <view wx:if="{{orderId}}" class="order-shortcut" bindtap="goOrder">
+    <text>这条会话关联了互助订单</text>
+    <text class="order-shortcut-action">接受接单 / 确认完成 ›</text>
+  </view>
+
   <view class="tool-row">
     <view class="tool-chip" bindtap="requestWechat">交换微信</view>
     <view class="tool-chip warn" bindtap="reportConversation">举报</view>

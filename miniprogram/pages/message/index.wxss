@@ -197,3 +197,16 @@
   background: #e5eaf0;
   display: block;
 }
+
+/* 订单会话入口：与普通会话文字区分开，发布者一眼能找到确认订单的位置 */
+.order-entry {
+  display: inline-block;
+  margin-top: 12rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}

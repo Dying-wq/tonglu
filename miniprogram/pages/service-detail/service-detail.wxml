@@ -36,5 +36,57 @@
     <button class="primary-button" bindtap="startOrder" wx:if="{{canOrder}}">{{actionText}}</button>
   </view>
 
+  <!-- 帖子评论：沿用现有云环境，数据写入 comments 集合 -->
+  <view class="card comment-card">
+    <view class="comment-head">全部评论（{{comments.length}}）</view>
+
+    <view wx:if="{{commentsLoading}}" class="comment-empty">评论加载中…</view>
+    <view wx:elif="{{commentsError}}" class="comment-empty">{{commentsError}}</view>
+    <view wx:elif="{{comments.length === 0}}" class="comment-empty">还没有评论，来说第一句吧</view>
+
+    <view wx:for="{{comments}}" wx:key="id" class="comment-item">
+      <view class="comment-avatar">{{item.authorAvatarText || '旅'}}</view>
+      <view class="comment-body">
+        <view class="comment-line">
+          <text class="comment-name">{{item.authorName}}</text>
+          <text class="comment-time">{{item.timeText}}</text>
+        </view>
+        <view class="comment-content">{{item.content}}</view>
+      </view>
+      <view
+        wx:if="{{item.isMine}}"
+        class="comment-remove"
+        data-id="{{item.id}}"
+        catchtap="removeComment"
+      >删除</view>
+    </view>
+
+    <view class="comment-input-row">
+      <input
+        class="comment-input"
+        type="text"
+        maxlength="200"
+        value="{{commentInput}}"
+        placeholder="写下你的评论…"
+        confirm-type="send"
+        bindinput="onCommentInput"
+        bindconfirm="submitComment"
+      />
+      <button
+        class="comment-send"
+        disabled="{{commentSubmitting}}"
+        bindtap="submitComment"
+      >{{commentSubmitting ? '发布中' : '发布'}}</button>
+    </view>
+  </view>
+
   <button class="complaint" bindtap="goComplaint">举报此内容</button>
+</view>
+
+<view class="page" wx:elif="{{loading}}">
+  <view class="card muted">帖子加载中…</view>
+</view>
+
+<view class="page" wx:else>
+  <view class="card muted">{{loadError || '帖子不存在或暂时读取失败'}}</view>
 </view>

@@ -4,6 +4,7 @@ const { requestSubscribe } = require('../../utils/subscribe');
 const { uploadPostImages } = require('../../utils/upload');
 const { detectRiskKeywords } = require('../../utils/risk');
 const { savePendingPost } = require('../../utils/draft');
+const { isActionOk, actionFailure } = require('../../utils/action-result');
 
 Page({
   data: {
@@ -153,8 +154,21 @@ Page({
       }
 
       const result = await createPost(postData);
+      // 云函数返回 ok:false 也是失败（敏感词、信用分不足等），
+      // 旧代码在这里一律提示「已保存，同车旅客可见」并返回上一页。
+      if (!isActionOk(result)) {
+        wx.showModal({
+          title: '发布未成功',
+          content: `${actionFailure(result, '发布未成功，请稍后重试。')}\n内容仍保留在本页，可修改后重新提交。`,
+          showCancel: false,
+          confirmText: '我知道了'
+        });
+        // 不提示成功、不申请订阅授权、不返回上一页
+        return;
+      }
+
       wx.showToast({
-        title: result && result.ok ? '发布成功' : '已保存，同车旅客可见',
+        title: '发布成功，同车旅客可见',
         icon: 'none'
       });
 

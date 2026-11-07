@@ -1,5 +1,5 @@
 const { CLOUD_ENV_ID } = require('./config');
-const { createPost } = require('./utils/cloud-api');
+const { createPost, ensureLogin } = require('./utils/cloud-api');
 const { refreshMessageBadge } = require('./utils/badge');
 const {
   readPendingPosts,
@@ -28,6 +28,10 @@ App({
       }
       wx.cloud.init(cloudOptions);
       this.globalData.cloudReady = true;
+      // 尽早拿到 openid：订单详情的「接受接单/确认完成」、
+      // 「我的发布/我的参与」、以及帖子评论的作者判定都依赖它。
+      // 之前只有聊天页和资料页会登录，从首页直接进订单页时按钮全都不显示。
+      ensureLogin();
       this.refreshUnreadBadge();
       this.loadTrainBinding();
       this.checkPrivacyNotice();

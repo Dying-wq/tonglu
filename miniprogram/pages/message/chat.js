@@ -50,6 +50,10 @@ Page({
     peerOpenid: '',
     // 云函数版本不匹配时的开发提示（正常部署时始终为空，不会出现在正式界面）
     deployHint: '',
+    // 会话里只有自己（单账号自测）时提示，避免把「没有对方」误判成功能坏了
+    selfOnly: false,
+    // 订单会话：从消息页带过来，聊天页顶部直接给出去订单确认页的入口
+    orderId: '',
     loading: true,
     quickReplies: ['我可以，现在方便沟通吗？', '请问具体时间和地点是？', '我已到附近，稍等一下。']
   },
@@ -98,7 +102,8 @@ Page({
       peerOpenid,
       peerName,
       peerAvatarText: peerAvatarText || peerName.slice(0, 1),
-      peerAvatarUrl
+      peerAvatarUrl,
+      orderId: options.orderId || ''
     });
     if (conversationId) {
       // 进会话即已读，并同步把 tabBar 红点减掉——
@@ -122,7 +127,7 @@ Page({
 
   async loadMessages(showConnected) {
     if (!this.data.conversationId) {
-      this.setData({ messages: [], loading: false, pollingText: '' });
+      this.setData({ messages: [], loading: false, pollingText: '', selfOnly: false });
       return;
     }
 
@@ -139,7 +144,8 @@ Page({
       loading: false,
       pollingText: showConnected ? '已连接' : '',
       blocked: state.blocked,
-      blockedByMe: state.blockedByMe
+      blockedByMe: state.blockedByMe,
+      selfOnly: state.selfOnly
     };
 
     // 对方身份以服务端为准：从会话列表进来时 URL 带的名字可能已经过期
@@ -171,6 +177,15 @@ Page({
     if (!this.data.post) return;
     wx.navigateTo({
       url: `/pages/service-detail/service-detail?id=${this.data.post.id}`
+    });
+  },
+
+  // 订单会话：不用退出聊天再回消息页找，直接进接受接单 / 确认完成
+  goOrder() {
+    const { orderId, conversationId } = this.data;
+    if (!orderId) return;
+    wx.navigateTo({
+      url: `/pages/order-detail/order-detail?orderId=${encodeURIComponent(orderId)}&conversationId=${encodeURIComponent(conversationId || '')}`
     });
   },
 
@@ -311,15 +326,27 @@ Page({
     });
     if (!confirm) return;
 
-    // 只传 conversationId，让对方身份由云端从会话参与者里推出来。
-    // 前端传 targetOpenid 一旦过期就会解除错人，这个判断放在服务端更安全。
+    // 以 conversationId 为主，peerOpenid 只作为提示；
+    // 对方身份最终由云端从会话/消息/拉黑记录里推断并校验，前端说了不算。
     const result = await unblockUserApi({
-      conversationId: this.data.conversationId
+      conversationId: this.data.conversationId,
+      peerOpenid: this.data.peerOpenid || ''
     });
+    console.info('[unblockUser] 云端返回：', result);
 
     if (result && result.ok) {
       this.setData({ blocked: false, blockedByMe: false, inputValue: '', riskWarning: '' });
-      wx.showToast({ title: '已取消拉黑，可以继续聊天', icon: 'none' });
+      // 单账号自测会话（只有自己）会返回 warning：状态已恢复，但要说清这不是真实双账号场景
+      if (result.warning) {
+        wx.showModal({
+          title: '已恢复会话',
+          content: result.warning,
+          showCancel: false,
+          confirmText: '知道了'
+        });
+      } else {
+        wx.showToast({ title: '已取消拉黑，可以继续聊天', icon: 'none' });
+      }
       // 再从服务端拉一次，确认状态真的恢复了（而不是只改了本地变量）
       this.loadMessages(false);
       return;
@@ -331,8 +358,13 @@ Page({
       message = '你并没有拉黑对方，是对方拉黑了你，需要对方解除。';
       this.setData({ blockedByMe: false });
     }
+    // 返回值里没有 version = 云端跑的还是旧版云函数，
+    // 改本地代码不会生效，必须重新上传部署。
+    if (!result || !result.version) {
+      message += '\n\n云端 unblockUser 可能还是旧版本：右键 cloudfunctions/unblockUser → 上传并部署（云端安装依赖）。';
+    }
 
-    // 用弹窗而不是 toast：云函数未部署时的提示比较长，toast 会被截断，
+    // 用弹窗而不是 toast：失败原因比较长，toast 会被截断，
     // 用户只能看到「取消拉黑失败」，无法判断到底卡在哪一步。
     wx.showModal({
       title: '取消拉黑未成功',

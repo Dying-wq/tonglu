@@ -1,0 +1,9 @@
+{
+  "name": "comments",
+  "version": "1.0.0",
+  "description": "帖子评论：读取、发布与软删除，复用现有云环境",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

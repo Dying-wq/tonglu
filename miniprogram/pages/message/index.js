@@ -41,7 +41,7 @@ Page({
   },
 
   goChat(event) {
-    const { id, openid, name, avatar, avatarUrl } = event.currentTarget.dataset;
+    const { id, openid, name, avatar, avatarUrl, orderId } = event.currentTarget.dataset;
     // 把对方身份一并带过去：
     // peerOpenid 用来区分「我拉黑了对方」和「对方拉黑了我」，
     // 名字和头像用来在聊天页顶部显示「正在和谁聊」。
@@ -50,10 +50,24 @@ Page({
       openid ? `peerOpenid=${encodeURIComponent(openid)}` : '',
       name ? `peerName=${encodeURIComponent(name)}` : '',
       avatar ? `peerAvatarText=${encodeURIComponent(avatar)}` : '',
-      avatarUrl ? `peerAvatarUrl=${encodeURIComponent(avatarUrl)}` : ''
+      avatarUrl ? `peerAvatarUrl=${encodeURIComponent(avatarUrl)}` : '',
+      orderId ? `orderId=${encodeURIComponent(orderId)}` : ''
     ].filter(Boolean).join('&');
     wx.navigateTo({
       url: `/pages/message/chat?${query}`
+    });
+  },
+
+  // 订单会话的显式入口：过去只能从会话里猜路径，发布者找不到
+  // 「接受接单 / 确认完成」在哪里。catchtap 阻止冒泡到卡片的 goChat。
+  goOrder(event) {
+    const { orderId, conversationId } = event.currentTarget.dataset;
+    if (!orderId) {
+      wx.showToast({ title: '暂无订单编号', icon: 'none' });
+      return;
+    }
+    wx.navigateTo({
+      url: `/pages/order-detail/order-detail?orderId=${encodeURIComponent(orderId)}&conversationId=${encodeURIComponent(conversationId || '')}`
     });
   },
 

@@ -1,18 +1,51 @@
 const cloud = require('wx-server-sdk');
+const { resolveTargetOpenid } = require('./target');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
+const _ = db.command;
+
+// 改了云函数一定要重新「上传并部署」。这个版本号会出现在每一次返回值里，
+// 在开发者工具 Console 里看到它，就说明云端跑的是这份新代码。
+const VERSION = '2026-11-07.1';
+
+// 会话记录里可能压根没写对方 openid（单账号自测时自己跟自己聊天），
+// 这时再从历史消息和拉黑记录里找一次。
+async function loadEvidence(conversationId, openid) {
+  if (!conversationId) return { messages: [], blocks: [] };
+  const [messages, blocks] = await Promise.all([
+    db.collection('messages')
+      .where({ conversationId })
+      .limit(20)
+      .get()
+      .then((res) => res.data || [])
+      .catch(() => []),
+    db.collection('blocks')
+      .where(_.or([
+        { blockerId: openid },
+        { blockerOpenid: openid },
+        { targetId: openid },
+        { targetOpenid: openid }
+      ]))
+      .limit(50)
+      .get()
+      .then((res) => res.data || [])
+      .catch(() => [])
+  ]);
+  return { messages, blocks };
+}
 
 // 取消拉黑：把该用户对目标的拉黑记录置为 inactive，并恢复会话状态。
 // 保留历史记录（不物理删除），便于后续做「拉黑记录」查询和风控统计。
 exports.main = async (event = {}) => {
   const openid = cloud.getWXContext().OPENID;
   const conversationId = event.conversationId || '';
-  let targetOpenid = event.targetOpenid || '';
+  // 前端可以带一个 peerOpenid 作为提示，但只作为提示，服务端会校验
+  const hint = event.targetOpenid || event.peerOpenid || '';
 
-  if (!conversationId && !targetOpenid) {
-    return { ok: false, code: 'TARGET_REQUIRED', message: '缺少取消拉黑的对象。' };
+  if (!conversationId && !hint) {
+    return { ok: false, code: 'TARGET_REQUIRED', version: VERSION, message: '缺少取消拉黑的对象。' };
   }
 
   // 先读会话：既能推断对方是谁，也能判断会话当前是否真的处于拉黑状态
@@ -22,39 +55,98 @@ exports.main = async (event = {}) => {
       const doc = await db.collection('conversations').doc(conversationId).get();
       conversation = doc.data || {};
     } catch (error) {
-      return { ok: false, code: 'CONVERSATION_NOT_FOUND', message: '会话不存在或无权访问。' };
-    }
-    const ids = conversation.participantIds || conversation.participantOpenids || [];
-    if (!targetOpenid) {
-      targetOpenid = ids.find((id) => id !== openid) || '';
+      return {
+        ok: false,
+        code: 'CONVERSATION_NOT_FOUND',
+        version: VERSION,
+        message: '会话不存在或无权访问。'
+      };
     }
   }
 
+  let targetOpenid = resolveTargetOpenid({ conversation: conversation || {}, openid, hint });
+  if (!targetOpenid && conversationId) {
+    const evidence = await loadEvidence(conversationId, openid);
+    targetOpenid = resolveTargetOpenid({ conversation: conversation || {}, openid, hint, ...evidence });
+  }
+
+  const participantIds = (conversation && (conversation.participantIds || conversation.participantOpenids)) || [];
+
+  // 推不出对方 = 会话里只有自己（单账号自测常见），或状态是手工改出来的脏数据。
+  // 早期版本在这里直接报「无法确定要取消拉黑的用户。」，
+  // 用户会永远卡在「已拉黑」，其实会话里根本没有真实的拉黑对象：
+  // 直接把状态恢复正常，并明确告诉用户这是自测场景。
   if (!targetOpenid) {
-    return { ok: false, code: 'TARGET_REQUIRED', message: '无法确定要取消拉黑的用户。' };
+    const dirty = Boolean(conversation)
+      && (conversation.status === 'blocked' || Boolean(conversation.blockedBy));
+    if (conversationId && dirty) {
+      try {
+        await db.collection('conversations').doc(conversationId).update({
+          data: {
+            status: 'active',
+            blockedBy: '',
+            unblockedAt: db.serverDate(),
+            updatedAt: db.serverDate()
+          }
+        });
+        return {
+          ok: true,
+          updated: 0,
+          targetOpenid: '',
+          selfOnly: true,
+          participantCount: participantIds.length,
+          version: VERSION,
+          warning: '当前会话里只有你自己（单账号自测常见），没有真实的拉黑对象；已直接恢复会话状态。真实双账号会话不受影响。'
+        };
+      } catch (error) {
+        return {
+          ok: false,
+          code: 'CONVERSATION_UPDATE_FAILED',
+          version: VERSION,
+          message: '会话状态恢复失败，请重新进入会话再试。'
+        };
+      }
+    }
+    return {
+      ok: false,
+      code: 'TARGET_REQUIRED',
+      version: VERSION,
+      participantCount: participantIds.length,
+      message: '会话里没有第二个参与者，无法确定要取消拉黑的用户。请用第二个账号发帖后进入聊天再测。'
+    };
   }
 
   let updated = 0;
   try {
-    const result = await db.collection('blocks')
-      .where({
-        blockerId: openid,
-        targetId: targetOpenid,
-        status: 'active'
-      })
-      .update({
+    // 兼容早期数据里 blockerOpenid / targetOpenid 的写法，
+    // 逐条按 _id 更新，避免 .where().update() 在部分字段缺失时静默更新 0 条。
+    const blockRes = await db.collection('blocks')
+      .where(_.or([
+        { blockerId: openid, targetId: targetOpenid, status: 'active' },
+        { blockerId: openid, targetOpenid: targetOpenid, status: 'active' },
+        { blockerOpenid: openid, targetId: targetOpenid, status: 'active' },
+        { blockerOpenid: openid, targetOpenid: targetOpenid, status: 'active' }
+      ]))
+      .limit(20)
+      .get();
+    const records = blockRes.data || [];
+    for (const record of records) {
+      await db.collection('blocks').doc(record._id).update({
         data: {
           status: 'inactive',
           unblockedAt: db.serverDate(),
           updatedAt: db.serverDate()
         }
       });
-    updated = (result.stats && result.stats.updated) || 0;
+      updated += 1;
+    }
   } catch (error) {
     // blocks 集合不存在时直接返回明确原因，避免前端只看到「失败」
     return {
       ok: false,
       code: 'BLOCKS_COLLECTION_ERROR',
+      version: VERSION,
+      targetOpenid,
       message: '拉黑记录更新失败，请确认 blocks 集合已创建。'
     };
   }
@@ -69,6 +161,7 @@ exports.main = async (event = {}) => {
     return {
       ok: false,
       code: 'NO_ACTIVE_BLOCK',
+      version: VERSION,
       targetOpenid,
       message: '没有找到你对该用户的拉黑记录，是对方拉黑了你，需要对方解除。'
     };
@@ -94,10 +187,11 @@ exports.main = async (event = {}) => {
         ok: true,
         updated,
         targetOpenid,
+        version: VERSION,
         warning: '拉黑已解除，但会话状态恢复失败，请重新进入会话。'
       };
     }
   }
 
-  return { ok: true, updated, targetOpenid };
+  return { ok: true, updated, targetOpenid, version: VERSION };
 };

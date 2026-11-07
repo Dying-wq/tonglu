@@ -1,4 +1,4 @@
-const { cancelOrder, confirmComplete, getOrderById, publisherAcceptOrder } = require('../../utils/cloud-api');
+const { cancelOrder, confirmComplete, ensureLogin, getOrderById, publisherAcceptOrder } = require('../../utils/cloud-api');
 
 const STATUS_LABELS = {
   pending_accept: '待确认',
@@ -39,6 +39,9 @@ Page({
       return;
     }
 
+    // 先确保 openid 已拿到：从消息页直接点「查看订单」进来时，
+    // 过去 globalData.openid 还是空的，发布者的「接受接单/确认完成」按钮全都不显示。
+    await ensureLogin();
     const order = await getOrderById(orderId);
     if (!order) {
       this.setData({

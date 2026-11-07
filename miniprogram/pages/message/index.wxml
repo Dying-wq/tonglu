@@ -36,6 +36,7 @@
     data-name="{{item.name}}"
     data-avatar="{{item.avatarText}}"
     data-avatar-url="{{item.avatarUrl}}"
+    data-order-id="{{item.orderId}}"
     bindtap="goChat"
   >
     <image
@@ -52,6 +53,14 @@
       </view>
       <view class="related">{{item.relatedTitle || '关联内容'}}</view>
       <view class="last">{{item.lastMessage}}</view>
+      <!-- 订单会话的明显入口：发布者从这里进订单页接受接单 / 确认完成 -->
+      <view
+        wx:if="{{item.orderId}}"
+        class="order-entry"
+        data-order-id="{{item.orderId}}"
+        data-conversation-id="{{item.id}}"
+        catchtap="goOrder"
+      >查看订单 · 接受接单 / 确认完成 ›</view>
     </view>
     <view wx:if="{{item.status === 'blocked'}}" class="blocked-tag">已拉黑</view>
     <view wx:elif="{{item.unread}}" class="unread">{{item.unread}}</view>

@@ -97,6 +97,11 @@ exports.main = async (event = {}) => {
   return {
     ok: true,
     conversationId,
+    version: '2026-11-07.1',
+    participantCount: participantIds.length,
+    // 单账号自测时会话里只有自己，页面会显示默认的「同车旅客 / 旅」，
+    // 此时拉黑/取消拉黑没有真实对象，明确提示避免误判为功能坏了。
+    selfOnly: !peerOpenid,
     peer,
     peerOpenid,
     blocked,

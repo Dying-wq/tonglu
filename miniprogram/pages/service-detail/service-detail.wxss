@@ -96,3 +96,117 @@
   font-size: 26rpx;
   line-height: 1.2;
 }
+
+/* 帖子评论：沿用详情页卡片风格，避免另起一套视觉 */
+.comment-card {
+  margin-top: 24rpx;
+}
+
+.comment-head {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12rpx;
+}
+
+.comment-empty {
+  padding: 24rpx 0;
+  color: #94a3b8;
+  font-size: 26rpx;
+  text-align: center;
+}
+
+.comment-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #f1f5f9;
+}
+
+.comment-avatar {
+  flex: none;
+  width: 56rpx;
+  height: 56rpx;
+  margin-right: 16rpx;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 26rpx;
+  line-height: 56rpx;
+  text-align: center;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.comment-name {
+  color: #334155;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.comment-time {
+  flex: none;
+  color: #94a3b8;
+  font-size: 22rpx;
+}
+
+.comment-content {
+  margin-top: 6rpx;
+  color: #1e293b;
+  font-size: 27rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.comment-remove {
+  flex: none;
+  margin-left: 12rpx;
+  padding: 4rpx 8rpx;
+  color: #94a3b8;
+  font-size: 24rpx;
+}
+
+.comment-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.comment-input {
+  flex: 1;
+  min-width: 0;
+  padding: 14rpx 18rpx;
+  border: 1rpx solid #e2e8f0;
+  border-radius: 10rpx;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 26rpx;
+}
+
+.comment-send {
+  flex: none;
+  margin: 0;
+  padding: 0 28rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  border-radius: 10rpx;
+  background: #2563eb;
+  color: #fff;
+  font-size: 26rpx;
+}
+
+.comment-send[disabled] {
+  background: #cbd5e1;
+  color: #fff;
+}

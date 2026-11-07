@@ -14,7 +14,7 @@ function callFunction(name, data = {}) {
       result: {
         ok: false,
         offline: true,
-        message: '云开发未初始化，当前使用本地演示数据。'
+        message: '云开发未初始化，请检查 AppID 与云环境配置。'
       }
     });
   }
@@ -94,6 +94,31 @@ async function login() {
     getApp().globalData.openid = res.result.openid;
   }
   return res.result;
+}
+
+// 页面角色判断（是不是发布者/接单者）、「我的发布」「我的参与」都依赖 openid。
+// 原先只有聊天页和资料页会调 login()，从首页直接进订单详情时
+// globalData.openid 还是空字符串，发布者就看不到「接受接单/确认完成」按钮。
+// 这里做一次带缓存的登录，避免每个页面重复调用云函数。
+let pendingLogin = null;
+async function ensureLogin() {
+  const app = typeof getApp === 'function' ? getApp() : null;
+  const cached = app && app.globalData ? app.globalData.openid : '';
+  if (cached) return cached;
+  if (!pendingLogin) {
+    // 不用 Promise.finally：小程序基础库较旧时兼容性不稳
+    pendingLogin = login()
+      .then((result) => {
+        pendingLogin = null;
+        return (result && result.openid) || '';
+      })
+      .catch((error) => {
+        pendingLogin = null;
+        console.warn('登录失败：', error);
+        return '';
+      });
+  }
+  return pendingLogin;
 }
 
 // ====================================================================
@@ -183,7 +208,9 @@ async function getPosts(type, trainNo) {
     const remainingRatio = binding ? calcRemainingRatio(binding) : 1;
 
     return rawPosts.map((post) => {
-      const urgencyInfo = getUrgencyInfo(remainingRatio, post.createdAt);
+      // createdAt 原样传给 getUrgencyInfo 时，若是字符串会算出 NaN，
+      // 「发布 ≤5 分钟显示新鲜绿标」永远不会生效；先统一解析成时间戳
+      const urgencyInfo = getUrgencyInfo(remainingRatio, parseDateValue(post.createdAt));
       return {
         id: post._id,
         type: post.type,
@@ -270,10 +297,9 @@ async function getMyOrders() {
 }
 
 async function getPostById(id) {
-  const fallback = mockData.posts.find((post) => post.id === id) || mockData.posts[0];
-  if (!getCloudReady()) {
-    return fallback;
-  }
+  // 不再回退 mock-data 的演示帖子：详情页一旦拿到假数据，
+  // 「我来帮」和评论都会作用在一条数据库里不存在的帖子上。
+  if (!id || !getCloudReady()) return null;
 
   try {
     const db = wx.cloud.database();
@@ -310,6 +336,27 @@ async function getPostById(id) {
 // ====================================================================
 async function createPost(form) {
   const res = await callFunction('createPost', form);
+  return res.result;
+}
+
+// ====================================================================
+// 帖子评论（复用现有云环境的 comments 集合，前端不直查数据库）
+// ====================================================================
+async function getComments(postId) {
+  if (!postId) {
+    return { ok: false, code: 'POST_REQUIRED', message: '缺少帖子编号。', comments: [] };
+  }
+  const res = await callFunction('comments', { action: 'list', postId });
+  return res.result;
+}
+
+async function addComment(postId, content) {
+  const res = await callFunction('comments', { action: 'add', postId, content });
+  return res.result;
+}
+
+async function removeComment(commentId) {
+  const res = await callFunction('comments', { action: 'remove', commentId });
   return res.result;
 }
 
@@ -372,7 +419,9 @@ async function getConversations() {
 }
 
 async function getConversationList() {
-  if (!getCloudReady()) return mockData.conversations;
+  // 云开发未就绪时返回空列表，不再回退 mock-data 的演示会话：
+  // 假会话点进去没有真实消息，还会让人误判拉黑后会话是否还在。
+  if (!getCloudReady()) return [];
 
   try {
     const res = await callFunction('getConversationList');
@@ -404,6 +453,8 @@ async function getChatState(conversationId) {
     blockedBy: '',
     blockedByMe: false,
     blockedByPeer: false,
+    selfOnly: false,
+    version: '',
     offline: false,
     error: '',
     needsRedeploy: false
@@ -433,6 +484,8 @@ async function getChatState(conversationId) {
       blockedBy: result.blockedBy || '',
       blockedByMe: Boolean(result.blockedByMe),
       blockedByPeer: Boolean(result.blockedByPeer),
+      selfOnly: Boolean(result.selfOnly),
+      version: result.version || '',
       offline: false,
       error: '',
       // 云端还返回旧结构（没有 blocked 字段）说明云函数没重新部署。
@@ -463,11 +516,43 @@ function normalizeMessage(item = {}) {
   };
 }
 
+// 统一解析时间字段：云数据库返回的 createdAt / lastMessageAt 可能是
+// Date 对象、时间戳数字、ISO 字符串，个别环境下还会是被序列化的
+// serverDate 对象（形如 { $date: 1730000000000 }）。解析失败返回 null，
+// 由调用方兜底，避免界面出现「NaN 天前」这种一眼假的时间。
+function parseDateValue(value) {
+  if (!value) return null;
+  if (value instanceof Date) {
+    const ts = value.getTime();
+    return Number.isFinite(ts) ? ts : null;
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const direct = Date.parse(trimmed);
+    if (Number.isFinite(direct)) return direct;
+    // 「2026-11-06 15:30:00」这类空格分隔的本地时间字符串
+    // 在 iOS JavaScriptCore 上 Date.parse 会返回 NaN，
+    // 换成 ISO 的「T」分隔再试一次
+    const fallback = Date.parse(trimmed.replace(' ', 'T'));
+    return Number.isFinite(fallback) ? fallback : null;
+  }
+  if (typeof value === 'object') {
+    // wx-server-sdk 序列化 serverDate 后的常见形态
+    if (typeof value.$date === 'number') return value.$date;
+    if (typeof value.T === 'number') return value.T;
+    if (value.$date) return parseDateValue(value.$date);
+  }
+  return null;
+}
+
 function formatMessageTime(value) {
-  if (!value) return '';
-  const date = value instanceof Date ? value : new Date(value);
-  const ts = date.getTime();
-  if (!Number.isFinite(ts)) return '';
+  const ts = parseDateValue(value);
+  if (ts === null) return '';
+  const date = new Date(ts);
   const pad = (n) => String(n).padStart(2, '0');
   const now = new Date();
   const sameDay = date.getFullYear() === now.getFullYear()
@@ -490,11 +575,9 @@ async function getUnreadCount() {
 }
 
 async function getOrderById(orderId) {
-  const fallback = {
-    ...mockData.demoOrder,
-    id: orderId || mockData.demoOrder.id
-  };
-  if (!getCloudReady() || !orderId) return fallback;
+  // 旧代码在没有 orderId 时返回 mockData.demoOrder，接单失败跳过来
+  // 就会看到一张与真实订单无关的「假订单 / 空订单」页。
+  if (!getCloudReady() || !orderId) return null;
 
   try {
     const db = wx.cloud.database();
@@ -675,9 +758,13 @@ async function adminUpdateStatus(payload = {}) {
 // 工具函数
 // ====================================================================
 function formatTime(ts) {
-  if (!ts) return '刚刚';
+  // 相对时间必须基于统一解析过的时间戳计算：
+  // 旧实现里 Date.parse(日期对象/序列化对象) 会得到 NaN，
+  // 界面上会显示「NaN 天前」，看起来就是「时间跟现实对不上」。
+  const parsed = parseDateValue(ts);
+  if (parsed === null) return '刚刚';
   const now = Date.now();
-  const diff = now - (typeof ts === 'number' ? ts : Date.parse(ts));
+  const diff = now - parsed;
   if (diff < 60000) return '刚刚';
   if (diff < 3600000) return Math.floor(diff / 60000) + ' 分钟前';
   if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前';
@@ -686,6 +773,7 @@ function formatTime(ts) {
 
 module.exports = {
   login,
+  ensureLogin,
   bindTrain,
   unbindTrain,
   getPosts,
@@ -693,6 +781,9 @@ module.exports = {
   getMyPosts,
   getMyOrders,
   createPost,
+  getComments,
+  addComment,
+  removeComment,
   acceptOrder,
   ensureConversation,
   createOrGetConversation,
@@ -724,6 +815,8 @@ module.exports = {
   getBlockRelations,
   invalidateBlockCache,
   formatMessageTime,
+  formatTime,
+  parseDateValue,
   getThankWall,
   getAdminDashboard,
   adminUpdateStatus
