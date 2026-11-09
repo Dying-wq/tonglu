@@ -5,12 +5,6 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
-function getContactRole(type) {
-  if (type === 'secondhand') return '联系卖家';
-  if (type === 'sports') return '联系组织者';
-  return '联系发布人';
-}
-
 exports.main = async (event = {}) => {
   if (!event.relatedId && !event.postId && !event.orderId) {
     return { ok: false, code: 'RELATED_REQUIRED', message: '需要关联内容。' };
@@ -79,7 +73,6 @@ exports.main = async (event = {}) => {
     }
   };
 
-  const lastMessage = `${getContactRole(post.type)}会话已创建，可以开始沟通细节。`;
   const result = await db.collection('conversations').add({
     data: {
       relatedType,
@@ -96,43 +89,30 @@ exports.main = async (event = {}) => {
       relatedTitle: post.title,
       relatedSummary: post.description || '',
       relatedPath: `/pages/service-detail/service-detail?id=${post._id || relatedId}`,
-      lastMessage,
+
+      // 会话刚建出来时没有任何真实消息。
+      // 过去这里写了一条「会话已创建」当 lastMessage、还给对方记了 1 条未读，
+      // 结果是：发起方只是点开对话框、一个字都没发，对方的消息列表里就已经
+      // 出现了这条会话和一个红点。这与微信的行为相反，也会误导对方。
+      // 现在改为：lastMessage 留空、双方未读都是 0、hasMessages=false。
+      // 未开始的会话由 getConversationList 挡在列表外，
+      // 真正发第一条消息时（sendMessage）才把 hasMessages 置为 true。
+      lastMessage: '',
       lastMessageAt: db.serverDate(),
       unreadMap: participantIds.reduce((map, id) => {
-        map[id] = id === openid ? 0 : 1;
+        map[id] = 0;
         return map;
       }, {}),
+      hasMessages: false,
+      initiatorOpenid: openid,
       status: 'active',
       createdAt: db.serverDate(),
       updatedAt: db.serverDate()
     }
   });
 
-  try {
-    await cloud.callFunction({
-      name: 'sendSubscribeNotice',
-      data: {
-        eventType: post.type === 'secondhand' ? 'secondhand_consult' : (post.type === 'lost' ? 'lost_claim' : 'first_contact'),
-        targetOpenid: publisherOpenid,
-        page: `/pages/message/chat?conversationId=${result._id}`,
-        title: post.title,
-        content: lastMessage
-      }
-    });
-  } catch (error) {
-    await db.collection('notification_logs').add({
-      data: {
-        eventType: 'first_contact',
-        targetOpenid: publisherOpenid,
-        relatedType: 'chat',
-        relatedId: result._id,
-        page: `/pages/message/chat?conversationId=${result._id}`,
-        status: 'pending',
-        error: error.message || error.errMsg || String(error),
-        createdAt: db.serverDate()
-      }
-    });
-  }
+  // 订阅消息不在这里发：此刻还没有任何内容可通知。
+  // 首次联系的提醒挪到 sendMessage 里，等第一条消息真正发出时再推。
 
   return {
     ok: true,

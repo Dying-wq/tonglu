@@ -34,8 +34,11 @@ test('getPosts excludes posts from blocked users at query level', () => {
   // 拉黑名单必须参与首页过滤
   assert.equal(body.includes('getBlockList'), true, 'getPosts 没有读取拉黑名单');
   // 必须在数据库查询层排除，而不是取回 20 条再在 JS 里筛，
-  // 否则一页会只剩十几条，出现「翻不到底」的错觉
-  assert.equal(body.includes('db.command.nin'), true, 'getPosts 未在查询层排除被拉黑用户');
+  // 否则一页会只剩十几条，出现「翻不到底」的错觉。
+  // 允许 db.command.nin 与 const cmd = db.command 后简写的 cmd.nin 两种形式。
+  const usesQueryLevelNin = body.includes('cmd.nin(hiddenOpenids)')
+    || body.includes('db.command.nin(hiddenOpenids)');
+  assert.equal(usesQueryLevelNin, true, 'getPosts 未在查询层排除被拉黑用户');
 });
 
 test('getConversationList keeps blocked conversations so unblock stays reachable', () => {

@@ -30,39 +30,63 @@
   <view
     wx:for="{{conversations}}"
     wx:key="id"
-    class="conversation-card {{item.status === 'blocked' ? 'is-blocked' : ''}}"
-    data-id="{{item.id}}"
-    data-openid="{{item.peerOpenid}}"
-    data-name="{{item.name}}"
-    data-avatar="{{item.avatarText}}"
-    data-avatar-url="{{item.avatarUrl}}"
-    data-order-id="{{item.orderId}}"
-    bindtap="goChat"
+    class="conv-swipe"
   >
-    <image
-      wx:if="{{item.avatarUrl}}"
-      class="avatar avatar-img"
-      src="{{item.avatarUrl}}"
-      mode="aspectFill"
-    />
-    <view wx:else class="avatar">{{item.avatarText}}</view>
-    <view class="content">
-      <view class="line">
-        <view class="name">{{item.name}} <text class="rank">{{item.rankName}}</text></view>
-        <view class="time">{{item.lastMessageTime}}</view>
-      </view>
-      <view class="related">{{item.relatedTitle || '关联内容'}}</view>
-      <view class="last">{{item.lastMessage}}</view>
-      <!-- 订单会话的明显入口：发布者从这里进订单页接受接单 / 确认完成 -->
+    <!-- 左滑后露出的操作区，压在卡片下面。卡片左移 168px 后这里才会露出来 -->
+    <view class="swipe-actions">
       <view
-        wx:if="{{item.orderId}}"
-        class="order-entry"
-        data-order-id="{{item.orderId}}"
-        data-conversation-id="{{item.id}}"
-        catchtap="goOrder"
-      >查看订单 · 接受接单 / 确认完成 ›</view>
+        class="swipe-action action-unread"
+        data-index="{{index}}"
+        catchtap="doMarkUnread"
+      >标为未读</view>
+      <view
+        class="swipe-action action-delete"
+        data-index="{{index}}"
+        catchtap="doDelete"
+      >删除</view>
     </view>
-    <view wx:if="{{item.status === 'blocked'}}" class="blocked-tag">已拉黑</view>
-    <view wx:elif="{{item.unread}}" class="unread">{{item.unread}}</view>
+
+    <view
+      class="conversation-card {{item.status === 'blocked' ? 'is-blocked' : ''}} {{item.dragging ? 'dragging' : ''}}"
+      style="transform: translateX({{item.offset || 0}}px);"
+      data-index="{{index}}"
+      data-id="{{item.id}}"
+      data-openid="{{item.peerOpenid}}"
+      data-name="{{item.name}}"
+      data-avatar="{{item.avatarText}}"
+      data-avatar-url="{{item.avatarUrl}}"
+      data-order-id="{{item.orderId}}"
+      bindtouchstart="onTouchStart"
+      bindtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
+      bindtouchcancel="onTouchEnd"
+      bindtap="goChat"
+    >
+      <image
+        wx:if="{{item.avatarUrl}}"
+        class="avatar avatar-img"
+        src="{{item.avatarUrl}}"
+        mode="aspectFill"
+      />
+      <view wx:else class="avatar">{{item.avatarText}}</view>
+      <view class="content">
+        <view class="line">
+          <view class="name">{{item.name}} <text class="rank">{{item.rankName}}</text></view>
+          <view class="time">{{item.lastMessageTime}}</view>
+        </view>
+        <view class="related">{{item.relatedTitle || '关联内容'}}</view>
+        <view class="last">{{item.lastMessage}}</view>
+        <!-- 订单会话的明显入口：发布者从这里进订单页接受接单 / 确认完成 -->
+        <view
+          wx:if="{{item.orderId}}"
+          class="order-entry"
+          data-order-id="{{item.orderId}}"
+          data-conversation-id="{{item.id}}"
+          catchtap="goOrder"
+        >查看订单 · 接受接单 / 确认完成 ›</view>
+      </view>
+      <view wx:if="{{item.status === 'blocked'}}" class="blocked-tag">已拉黑</view>
+      <view wx:elif="{{item.unread}}" class="unread">{{item.unread}}</view>
+    </view>
   </view>
 </view>

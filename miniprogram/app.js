@@ -7,6 +7,11 @@ const {
   flushPendingPosts: flushQueue
 } = require('./utils/draft');
 
+// tabBar 未读角标的全局轮询间隔。
+// 比消息页的 5 秒慢：这里只查一个数字，覆盖的是「用户不在消息页」的场景，
+// 没必要那么频繁。20 秒足够让人察觉有新消息，又不会把云函数调用量拉高。
+const BADGE_POLL_INTERVAL = 20000;
+
 App({
   globalData: {
     userInfo: null,
@@ -42,6 +47,36 @@ App({
     this.refreshUnreadBadge();
     this.loadTrainBinding();
     this.retryPendingPosts();
+    this.startBadgePolling();
+  },
+
+  // 小程序退到后台时停掉轮询，避免在后台空跑
+  onHide() {
+    this.stopBadgePolling();
+  },
+
+  // tabBar 角标的全局轮询。
+  // 原来只在 onShow 刷一次：用户停在首页不动，对方发来消息，角标不会变，
+  // 必须切一次页面才更新。消息页自己有 5 秒轮询，但那只在消息页生效。
+  // 这里补一个更慢的全局轮询，保证在任何页面都能看到未读变化。
+  startBadgePolling() {
+    this.stopBadgePolling();
+    if (!this.globalData.cloudReady) return;
+
+    this.badgeTimer = setInterval(() => {
+      // 消息页有更快的 5 秒轮询，并且会自己刷角标，这里跳过避免重复调用
+      const pages = getCurrentPages();
+      const current = pages[pages.length - 1];
+      if (current && current.route === 'pages/message/index') return;
+      this.refreshUnreadBadge();
+    }, BADGE_POLL_INTERVAL);
+  },
+
+  stopBadgePolling() {
+    if (this.badgeTimer) {
+      clearInterval(this.badgeTimer);
+      this.badgeTimer = null;
+    }
   },
 
   // 弱网兜底：把发布失败暂存在本地的内容补发出去（报告书 6.1.1）

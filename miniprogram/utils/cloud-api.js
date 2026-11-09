@@ -184,19 +184,33 @@ async function getPosts(type, trainNo) {
 
   try {
     const db = wx.cloud.database();
-    const query = {};
-    if (type) query.type = type;
-    if (currentTrain) query.trainNo = currentTrain;
-    // 不加 carriageNo 条件：同车次不同车厢的用户必须能互相看到
-    query.status = db.command.in(['open', 'resolved']);
+    const cmd = db.command;
+
+    // 条件从「对象」改成「_.and 数组」：过期过滤需要 or 分支
+    // （有 expireAt 且未到期 / 根本没有 expireAt 字段的老帖子），
+    // 用普通对象表达不了。
+    const conditions = [
+      // 不加 carriageNo 条件：同车次不同车厢的用户必须能互相看到
+      { status: cmd.in(['open', 'resolved']) },
+      // 到站后隐藏：发布者下车了，帖子就不该继续挂在首页上，
+      // 否则有人会照着已经失效的信息白跑一趟。
+      // 老帖子没有 expireAt 字段，用 exists(false) 兜住，不会被整批隐藏。
+      cmd.or([
+        { expireAt: cmd.gt(new Date()) },
+        { expireAt: cmd.exists(false) }
+      ])
+    ];
+
+    if (type) conditions.push({ type });
+    if (currentTrain) conditions.push({ trainNo: currentTrain });
     // 在数据库查询层就排除被拉黑用户的帖子，而不是取回来再在 JS 里筛：
     // 客户端查询有 20 条上限，先取后筛会让一页只剩十几条，出现"翻不到底"的错觉。
     if (hiddenOpenids.length) {
-      query.publisherOpenid = db.command.nin(hiddenOpenids);
+      conditions.push({ publisherOpenid: cmd.nin(hiddenOpenids) });
     }
 
     const res = await db.collection('posts')
-      .where(query)
+      .where(cmd.and(conditions))
       .orderBy('createdAt', 'desc')
       .get();
 
@@ -419,20 +433,35 @@ async function getConversations() {
 }
 
 async function getConversationList() {
+  const overview = await getConversationOverview();
+  return overview.conversations;
+}
+
+// 会话列表 + 总未读数一次取回。
+// 消息页轮询用这个：分开调 getConversationList 和 getUnreadCount 会有两个问题——
+// 多一次云函数往返；两次读数的时刻不同，角标数字可能和列表里的红点对不上。
+async function getConversationOverview() {
   // 云开发未就绪时返回空列表，不再回退 mock-data 的演示会话：
   // 假会话点进去没有真实消息，还会让人误判拉黑后会话是否还在。
-  if (!getCloudReady()) return [];
+  if (!getCloudReady()) return { conversations: [], unreadTotal: 0 };
 
   try {
     const res = await callFunction('getConversationList');
-    if (res.result && res.result.ok) return res.result.conversations || [];
+    if (res.result && res.result.ok) {
+      return {
+        conversations: res.result.conversations || [],
+        // 云端未部署到最新版时不返回 unreadTotal，用 -1 表示「未知」，
+        // 调用方据此退回 getUnreadCount 单独查询
+        unreadTotal: typeof res.result.unreadTotal === 'number' ? res.result.unreadTotal : -1
+      };
+    }
     console.warn('getConversationList 返回异常，已返回空会话列表');
-    return [];
+    return { conversations: [], unreadTotal: 0 };
   } catch (error) {
     // 不再回退到前端直查 conversations 集合：集合权限一旦放开，
     // 直查会绕过 openid 过滤，把全平台会话暴露给任意用户。
     console.warn('读取会话列表失败，已返回空列表：', error);
-    return [];
+    return { conversations: [], unreadTotal: 0 };
   }
 }
 
@@ -564,6 +593,18 @@ function formatMessageTime(value) {
 
 async function markConversationRead(conversationId) {
   const res = await callFunction('markConversationRead', { conversationId });
+  return res.result;
+}
+
+// 左滑「删除」：只删自己这边的视图，对方和消息记录都不受影响
+async function deleteConversation(conversationId) {
+  const res = await callFunction('deleteConversation', { conversationId });
+  return res.result;
+}
+
+// 左滑「标为未读」：给自己这边钉一个红点，点进会话即清零
+async function markConversationUnread(conversationId) {
+  const res = await callFunction('markConversationUnread', { conversationId });
   return res.result;
 }
 
@@ -795,6 +836,9 @@ module.exports = {
   getMessageList,
   getChatState,
   markConversationRead,
+  deleteConversation,
+  markConversationUnread,
+  getConversationOverview,
   getUnreadCount,
   getOrderById,
   confirmComplete,

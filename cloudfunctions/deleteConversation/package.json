@@ -1,0 +1,9 @@
+{
+  "name": "deleteConversation",
+  "version": "1.0.0",
+  "description": "左滑删除会话：只删自己这一边的视图，不删消息记录",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

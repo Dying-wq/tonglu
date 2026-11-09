@@ -1,0 +1,9 @@
+{
+  "name": "markConversationUnread",
+  "version": "1.0.0",
+  "description": "左滑标为未读：给自己这边钉一个未读提醒，点进会话即清零",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

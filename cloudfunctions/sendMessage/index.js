@@ -96,14 +96,63 @@ exports.main = async (event = {}) => {
   participantIds.forEach((id) => {
     unreadMap[id] = id === wxContext.OPENID ? (Number(unreadMap[id]) || 0) : (Number(unreadMap[id]) || 0) + 1;
   });
+
+  // 对方可能把这条会话「删除」过（只删自己那一边）。新消息到达时必须让它
+  // 重新出现，否则对方永远看不到这条消息，而发送方以为已经发出去了。
+  const hiddenMap = { ...(conversation.hiddenMap || {}) };
+  participantIds.forEach((id) => {
+    hiddenMap[id] = false;
+  });
+
+  // 会话的第一条真实消息：此时才把会话「激活」，
+  // 对方的会话列表也才会第一次出现这条会话。
+  const isFirstMessage = conversation.hasMessages !== true;
+
   await db.collection('conversations').doc(event.conversationId).update({
     data: {
       lastMessage: event.content,
       lastMessageAt: db.serverDate(),
       unreadMap,
+      hiddenMap,
+      hasMessages: true,
+      startedAt: conversation.startedAt || db.serverDate(),
       updatedAt: db.serverDate()
     }
   });
+
+  // 首次联系的订阅提醒挪到这里：只有会话的第一条消息才推一次。
+  // 放在 createOrGetConversation 里会导致「点开对话框但没发消息」就打扰对方。
+  if (isFirstMessage && peerOpenid) {
+    try {
+      await cloud.callFunction({
+        name: 'sendSubscribeNotice',
+        data: {
+          eventType: 'first_contact',
+          targetOpenid: peerOpenid,
+          page: `/pages/message/chat?conversationId=${event.conversationId}`,
+          title: conversation.relatedTitle || '新消息',
+          content: event.content
+        }
+      });
+    } catch (error) {
+      try {
+        await db.collection('notification_logs').add({
+          data: {
+            eventType: 'first_contact',
+            targetOpenid: peerOpenid,
+            relatedType: 'chat',
+            relatedId: event.conversationId,
+            page: `/pages/message/chat?conversationId=${event.conversationId}`,
+            status: 'pending',
+            error: error.message || error.errMsg || String(error),
+            createdAt: db.serverDate()
+          }
+        });
+      } catch (logError) {
+        // 日志写失败不影响消息本身，忽略
+      }
+    }
+  }
 
   return {
     ok: true,

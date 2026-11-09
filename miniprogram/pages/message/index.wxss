@@ -67,16 +67,61 @@
   color: #ffffff;
 }
 
+/* 左滑容器：卡片在上层横向位移，操作按钮压在下面，露出时才可见 */
+.conv-swipe {
+  position: relative;
+  margin-bottom: 18rpx;
+  overflow: hidden;
+  border-radius: 8rpx;
+}
+
+.swipe-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+}
+
+/* 宽度与 index.js 里的 ACTION_WIDTH / 2 对应（每个 84px，合计 168px）。
+   这里必须用 px 而不是 rpx：JS 里 touch 事件的 clientX 与 offset 都是 px，
+   两边单位不一致时按钮会露不全或者露出空白。 */
+.swipe-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  color: #ffffff;
+  font-size: 26rpx;
+  font-weight: 800;
+}
+
+.action-unread {
+  background: #3b82f6;
+}
+
+.action-delete {
+  background: #ef4444;
+}
+
 .conversation-card {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 20rpx;
   min-width: 0;
-  margin-bottom: 18rpx;
   padding: 24rpx;
   border: 1rpx solid #edf1f6;
   border-radius: 8rpx;
   background: #ffffff;
+  transition: transform 0.22s ease;
+}
+
+/* 拖动过程中关掉过渡，否则卡片跟不上手指，表现为拖影 */
+.conversation-card.dragging {
+  transition: none;
 }
 
 .avatar {

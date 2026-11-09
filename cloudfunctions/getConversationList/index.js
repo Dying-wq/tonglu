@@ -32,15 +32,32 @@ exports.main = async () => {
   // 不过滤 status === 'blocked' 的会话：
   // 拉黑后如果会话从列表消失，用户就再也点不进聊天页，也就无法「取消拉黑」。
   // 拉黑状态改为在列表里打标显示，会话本身保留。
+  //
+  // 但要过滤 hasMessages === false 的会话：
+  // 会话在「点联系发布人」的那一刻就创建了，当时双方都还没有任何消息。
+  // 过去这种空会话会直接出现在对方列表里、还带 1 条未读，看起来像「对方找我了」，
+  // 实际上一个字都没发。微信的行为是不显示，这里跟它对齐。
+  // 老会话没有这个字段，用 exists(false) 兜住，避免历史会话整批消失。
   const res = await db.collection('conversations')
-    .where({
-      participantIds: _.all([openid])
-    })
+    .where(_.and([
+      { participantIds: _.all([openid]) },
+      _.or([
+        { hasMessages: true },
+        { hasMessages: _.exists(false) }
+      ])
+    ]))
     .orderBy('lastMessageAt', 'desc')
     .limit(100)
     .get();
 
-  const rows = res.data || [];
+  // 左滑「删除」只删自己这一边，用 hiddenMap[openid]=true 标记。
+  // 这里在取回后过滤，而不是写进 where 的点路径条件：
+  // 点路径在键名异常时会静默不生效，而删除会话是低频操作，
+  // 100 条上限内做一次内存过滤的代价可以忽略。
+  const rows = (res.data || []).filter((item) => {
+    const hiddenMap = item.hiddenMap || {};
+    return hiddenMap[openid] !== true;
+  });
   const peerIds = rows.map((item) => {
     const ids = item.participantIds || item.participantOpenids || [];
     return ids.find((id) => id !== openid) || '';
@@ -84,5 +101,14 @@ exports.main = async () => {
     };
   });
 
-  return { ok: true, conversations };
+  // 顺便把总未读数算出来一起返回。
+  // 消息页每 5 秒轮询一次，如果列表和角标各调一个云函数，等于往返两次；
+  // 而且两次读数来自不同时刻，角标可能和列表对不上。
+  // 这里基于已过滤的列表求和，也天然排除了「已删除会话」的未读数。
+  const unreadTotal = conversations.reduce(
+    (sum, item) => sum + (Number(item.unread) || 0),
+    0
+  );
+
+  return { ok: true, conversations, unreadTotal };
 };
