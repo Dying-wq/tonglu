@@ -54,6 +54,17 @@
     <view class="edit-chip">设置</view>
   </view>
 
+  <!-- 黑名单入口：拉黑和删除会话是两件事。
+       之前取消拉黑只能从那条会话点进去，会话一删就再也解不开，
+       所以把黑名单独立成一个入口。 -->
+  <view class="card notice-panel" bindtap="goBlockedUsers">
+    <view>
+      <view class="notice-title">黑名单</view>
+      <view class="muted">查看已拉黑的人 · 解除拉黑</view>
+    </view>
+    <view class="edit-chip">管理</view>
+  </view>
+
   <!-- 菜单 -->
   <view class="menu-grid">
     <view

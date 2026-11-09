@@ -89,7 +89,13 @@ exports.main = async (event = {}) => {
   const blockedByPeer = blocked && Boolean(blockedBy) && blockedBy !== openid;
 
   const res = await db.collection('messages')
-    .where({ conversationId })
+    .where({
+      conversationId,
+      // 长按「删除」只对自己生效，这里直接不返回。
+      // nin 作用在数组字段上表示「数组里不包含这个值」，
+      // 老消息没有 deletedFor 字段，同样会命中，不需要额外兼容分支。
+      deletedFor: _.nin([openid])
+    })
     .orderBy('createdAt', 'asc')
     .limit(100)
     .get();
@@ -97,7 +103,7 @@ exports.main = async (event = {}) => {
   return {
     ok: true,
     conversationId,
-    version: '2026-11-07.1',
+    version: '2026-11-09.1',
     participantCount: participantIds.length,
     // 单账号自测时会话里只有自己，页面会显示默认的「同车旅客 / 旅」，
     // 此时拉黑/取消拉黑没有真实对象，明确提示避免误判为功能坏了。
@@ -114,7 +120,9 @@ exports.main = async (event = {}) => {
       senderId: item.senderId || item.senderOpenid,
       receiverId: item.receiverId,
       contentType: item.contentType || item.type || 'text',
-      content: item.content,
+      // 撤回后正文已清空，这里再兜一层，防止历史数据里还留着原文
+      content: item.recalled ? '' : item.content,
+      recalled: Boolean(item.recalled),
       isRead: Boolean(item.isRead || item.read),
       riskStatus: item.riskStatus || 'safe',
       createdAt: item.createdAt

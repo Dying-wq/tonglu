@@ -1,0 +1,9 @@
+{
+  "name": "recallMessage",
+  "version": "1.0.0",
+  "description": "撤回消息：双方不可见，限本人消息且 2 分钟内",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

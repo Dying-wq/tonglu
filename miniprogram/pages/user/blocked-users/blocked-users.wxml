@@ -1,0 +1,40 @@
+<view class="page blocked-page">
+  <view class="page-head">
+    <view class="head-title">黑名单</view>
+    <view class="head-desc">被你拉黑的人无法给你发消息，对方的帖子也不会出现在首页。解除后恢复正常。</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty-hint">加载中…</view>
+
+  <view wx:elif="{{list.length === 0}}" class="empty-hint">
+    <view class="empty-title">黑名单是空的</view>
+    <view class="empty-desc">在聊天页点「拉黑」后，对方会出现在这里</view>
+  </view>
+
+  <view
+    wx:for="{{list}}"
+    wx:key="openid"
+    class="blocked-item"
+  >
+    <image
+      wx:if="{{item.avatarUrl}}"
+      class="avatar avatar-img"
+      src="{{item.avatarUrl}}"
+      mode="aspectFill"
+    />
+    <view wx:else class="avatar">{{item.avatarText}}</view>
+
+    <view class="meta">
+      <view class="name">{{item.name}}</view>
+      <view class="sub">
+        {{item.rankName}}<text wx:if="{{item.blockedAtText}}"> · 拉黑于 {{item.blockedAtText}}</text>
+      </view>
+    </view>
+
+    <view
+      class="unblock-btn"
+      data-index="{{index}}"
+      catchtap="unblock"
+    >解除</view>
+  </view>
+</view>

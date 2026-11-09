@@ -150,6 +150,21 @@
   font-size: 22rpx;
 }
 
+/* 撤回后的占位：去掉气泡底色，只留一行居中灰字，
+   和真实消息区分开，避免被误读成「对方发了这句话」 */
+.bubble.recalled {
+  background: transparent;
+  color: #94a3b8;
+  text-align: center;
+  max-width: 100%;
+  padding: 8rpx 0;
+  font-size: 24rpx;
+}
+
+.recall-text {
+  font-style: normal;
+}
+
 .quick-row {
   display: flex;
   gap: 10rpx;

@@ -53,10 +53,13 @@
     <view
       wx:for="{{messages}}"
       wx:key="id"
-      class="bubble {{item.sender === 'me' ? 'mine' : 'other'}}"
+      class="bubble {{item.sender === 'me' ? 'mine' : 'other'}} {{item.recalled ? 'recalled' : ''}}"
+      data-index="{{index}}"
+      bindlongpress="onMessageLongPress"
     >
-      <view>{{item.content}}</view>
-      <view wx:if="{{item.riskStatus === 'warning'}}" class="bubble-risk">风险提醒</view>
+      <view wx:if="{{item.recalled}}" class="recall-text">{{item.recallText}}</view>
+      <view wx:else>{{item.content}}</view>
+      <view wx:if="{{item.riskStatus === 'warning' && !item.recalled}}" class="bubble-risk">风险提醒</view>
       <view class="time">{{item.createdAt || ''}}</view>
     </view>
   </scroll-view>

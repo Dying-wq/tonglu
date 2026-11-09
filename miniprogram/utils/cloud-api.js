@@ -85,6 +85,27 @@ async function getBlockList(force = false) {
   return relations.hiddenOpenids;
 }
 
+// 黑名单管理页专用：拿完整名单（含昵称、头像、拉黑时间）。
+// 不走 blockCache —— 那里的 relations 只有 openid，没有展示信息，
+// 而且这个页面用户是来看最新状态的，用 5 分钟前的缓存没有意义。
+async function getBlockedUsers() {
+  if (!getCloudReady()) return [];
+
+  try {
+    const res = await callFunction('getBlockList');
+    const result = res.result || {};
+    if (!result.ok) return [];
+
+    return (result.blockedUsers || []).map((item) => ({
+      ...item,
+      blockedAtText: item.blockedAt ? formatMessageTime(item.blockedAt) : ''
+    }));
+  } catch (error) {
+    console.warn('读取黑名单失败：', error);
+    return [];
+  }
+}
+
 // ====================================================================
 // 登录
 // ====================================================================
@@ -186,18 +207,23 @@ async function getPosts(type, trainNo) {
     const db = wx.cloud.database();
     const cmd = db.command;
 
-    // 条件从「对象」改成「_.and 数组」：过期过滤需要 or 分支
-    // （有 expireAt 且未到期 / 根本没有 expireAt 字段的老帖子），
-    // 用普通对象表达不了。
+    // 过期过滤分两种：
+    // 1) 新帖子有 expireAt（发帖时按车次到达时间算出），到点自动隐藏；
+    // 2) 老帖子没有这个字段，无法知道发布者何时下车，退化为「发布后 24 小时」。
+    //    不做这一步的话，第三批之前发的帖子会永远挂在首页上——
+    //    用户看到的就是「车主早就下车了，帖子还在」。
+    const nowTs = Date.now();
+    const LEGACY_POST_TTL_MS = 24 * 60 * 60 * 1000;
+
     const conditions = [
       // 不加 carriageNo 条件：同车次不同车厢的用户必须能互相看到
       { status: cmd.in(['open', 'resolved']) },
-      // 到站后隐藏：发布者下车了，帖子就不该继续挂在首页上，
-      // 否则有人会照着已经失效的信息白跑一趟。
-      // 老帖子没有 expireAt 字段，用 exists(false) 兜住，不会被整批隐藏。
       cmd.or([
-        { expireAt: cmd.gt(new Date()) },
-        { expireAt: cmd.exists(false) }
+        { expireAt: cmd.gt(new Date(nowTs)) },
+        {
+          expireAt: cmd.exists(false),
+          createdAt: cmd.gt(new Date(nowTs - LEGACY_POST_TTL_MS))
+        }
       ])
     ];
 
@@ -428,6 +454,18 @@ async function sendMessage(message) {
   return res.result;
 }
 
+// 长按删除单条消息：只对自己隐藏
+async function deleteMessage(messageId) {
+  const res = await callFunction('deleteMessage', { messageId });
+  return res.result;
+}
+
+// 撤回消息：双方不可见，2 分钟内有效（服务端二次校验）
+async function recallMessage(messageId) {
+  const res = await callFunction('recallMessage', { messageId });
+  return res.result;
+}
+
 async function getConversations() {
   return getConversationList();
 }
@@ -532,16 +570,36 @@ async function getMessageList(conversationId) {
   return state.messages;
 }
 
+// 撤回时限：2 分钟。
+// 前端只负责决定「撤回」选项要不要出现在菜单里，
+// 真正的判定在 recallMessage 云函数里再做一次——客户端时间可以改。
+const RECALL_WINDOW_MS = 2 * 60 * 1000;
+
 // 把云端返回的消息整理成页面直接可用的结构。
 // createdAt 可能是 Date 对象、时间戳或 ISO 字符串，统一转成「HH:mm」或「MM-DD HH:mm」。
 function normalizeMessage(item = {}) {
+  const createdTs = parseDateValue(item.createdAt);
+  const sender = item.sender || (item.isMine ? 'me' : 'other');
+  const recalled = Boolean(item.recalled);
+
   return {
     id: item._id || item.id || `msg_${Math.random().toString(36).slice(2)}`,
-    sender: item.sender || (item.isMine ? 'me' : 'other'),
-    content: item.content || '',
+    sender,
+    // 撤回后正文直接清空，避免通过接口再把它读回来
+    content: recalled ? '' : (item.content || ''),
     contentType: item.contentType || 'text',
     riskStatus: item.riskStatus || 'safe',
-    createdAt: formatMessageTime(item.createdAt)
+    recalled,
+    // 撤回占位文案：自己撤回和别人撤回要分开显示
+    recallText: recalled
+      ? (sender === 'me' ? '你撤回了一条消息' : '对方撤回了一条消息')
+      : '',
+    createdAt: formatMessageTime(item.createdAt),
+    createdTs,
+    canRecall: !recalled
+      && sender === 'me'
+      && createdTs > 0
+      && (Date.now() - createdTs) <= RECALL_WINDOW_MS
   };
 }
 
@@ -830,6 +888,8 @@ module.exports = {
   createOrGetConversation,
   publisherAcceptOrder,
   sendMessage,
+  deleteMessage,
+  recallMessage,
   getConversations,
   getConversationList,
   getMessages,
@@ -856,6 +916,7 @@ module.exports = {
   blockUser,
   unblockUser,
   getBlockList,
+  getBlockedUsers,
   getBlockRelations,
   invalidateBlockCache,
   formatMessageTime,

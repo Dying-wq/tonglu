@@ -160,5 +160,11 @@ Page({
     wx.navigateTo({
       url: '/pages/user/notification-settings'
     });
+  },
+
+  goBlockedUsers() {
+    wx.navigateTo({
+      url: '/pages/user/blocked-users/blocked-users'
+    });
   }
 });

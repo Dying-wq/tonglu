@@ -2,10 +2,12 @@ const { detectRiskKeywords } = require('../../utils/risk');
 const {
   blockUser: blockUserApi,
   createOrGetConversation,
+  deleteMessage: deleteMessageApi,
   getChatState,
   getPostById,
   login,
   markConversationRead,
+  recallMessage: recallMessageApi,
   reportConversationOrMessage,
   requestWechatExchange,
   sendMessage,
@@ -198,6 +200,90 @@ Page({
     });
   },
 
+  // ================== 长按消息：撤回 / 删除 ==================
+
+  // 长按气泡弹出操作菜单。
+  // 「撤回」只对自己发的、2 分钟内的消息出现；「删除」任何时候都有。
+  // 前端只是决定菜单项，真正的时限判定在 recallMessage 云函数里再做一次，
+  // 因为客户端时间可以改，不能作为唯一依据。
+  onMessageLongPress(event) {
+    const index = event.currentTarget.dataset.index;
+    const item = this.data.messages[index];
+    if (!item) return;
+
+    // 已撤回的消息只剩占位文案，没有可操作的内容
+    if (item.recalled) {
+      wx.showToast({ title: '这条消息已撤回', icon: 'none' });
+      return;
+    }
+
+    const actions = item.canRecall ? ['撤回', '删除'] : ['删除'];
+
+    wx.showActionSheet({
+      itemList: actions,
+      success: (res) => {
+        const label = actions[res.tapIndex];
+        if (label === '撤回') {
+          this.doRecall(item);
+        } else if (label === '删除') {
+          this.doDelete(item);
+        }
+      },
+      fail: () => {}
+    });
+  },
+
+  doRecall(item) {
+    wx.showModal({
+      title: '撤回消息',
+      content: '撤回后双方都看不到这条消息，确定撤回吗？',
+      confirmText: '撤回',
+      success: async (res) => {
+        if (!res || !res.confirm) return;
+
+        const result = await recallMessageApi(item.id);
+        if (!result || !result.ok) {
+          // 超时是最常见的情况，云函数会带回「发送于 X 分钟前」的具体说明，
+          // 用弹窗而不是 toast，避免长文案被截断
+          wx.showModal({
+            title: '撤回失败',
+            content: (result && result.message) || '请稍后重试',
+            showCancel: false,
+            confirmText: '知道了'
+          });
+          return;
+        }
+
+        wx.showToast({ title: '已撤回', icon: 'none' });
+        this.loadMessages(false);
+      },
+      fail: () => {}
+    });
+  },
+
+  doDelete(item) {
+    wx.showModal({
+      title: '删除消息',
+      content: '只删除你这边，对方仍能看到这条消息。',
+      confirmText: '删除',
+      confirmColor: '#E24B4A',
+      success: async (res) => {
+        if (!res || !res.confirm) return;
+
+        const result = await deleteMessageApi(item.id);
+        if (!result || !result.ok) {
+          wx.showToast({ title: (result && result.message) || '删除失败', icon: 'none' });
+          return;
+        }
+
+        // 本地先移除，不必等下一次轮询
+        const messages = this.data.messages.filter((msg) => msg.id !== item.id);
+        this.setData({ messages });
+      },
+      fail: () => {}
+    });
+  },
+
   useQuickReply(event) {
     if (this.data.blocked) return;
     this.setData({
@@ -248,7 +334,12 @@ Page({
       content,
       contentType: 'text',
       createdAt: '刚刚',
-      riskStatus: risk.hasRisk ? 'warning' : 'safe'
+      riskStatus: risk.hasRisk ? 'warning' : 'safe',
+      // 刚发出的消息一定在撤回窗口内，本地先给出正确的菜单项，
+      // 免得长按后只有「删除」、等下一次轮询才出现「撤回」
+      recalled: false,
+      recallText: '',
+      canRecall: true
     };
     this.setData({
       messages: this.data.messages.concat(localMessage),

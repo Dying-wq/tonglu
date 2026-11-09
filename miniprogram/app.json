@@ -14,6 +14,7 @@
     "pages/admin/admin",
     "pages/profile-edit/profile-edit",
     "pages/user/notification-settings",
+    "pages/user/blocked-users/blocked-users",
     "pages/search/search",
     "pages/rules/rules",
     "pages/complaint-submit/complaint-submit",
