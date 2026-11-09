@@ -15,6 +15,11 @@ const {
 } = require('../../utils/cloud-api');
 const { applyUnreadCount } = require('../../utils/badge');
 
+// 撤回时限，与 recallMessage 云函数里的 RECALL_WINDOW_MS 保持一致。
+// 这里只用来决定菜单项显示「撤回」还是「撤回（已超时）」，
+// 真正的判定在服务端再做一次——客户端时间可以改。
+const RECALL_WINDOW_MS = 2 * 60 * 1000;
+
 // URL 参数里的中文/头像地址是 encodeURIComponent 过的，解不开时按原值用
 function decodeParam(value) {
   if (!value) return '';
@@ -217,19 +222,62 @@ Page({
       return;
     }
 
-    const actions = item.canRecall ? ['撤回', '删除'] : ['删除'];
+    // 菜单项里始终保留「撤回」：
+    // 之前超时后直接不显示这一项，用户会以为「撤回没做」，
+    // 而不是「超过 2 分钟不能撤回」。现在点下去给明确原因。
+    //
+    // 这里必须用当前时间重新算，不能直接读 item.canRecall：
+    // 那个值是页面渲染那一刻算出来的，页面开着几分钟后它还是 true，
+    // 长按会给出一个点了必然失败的「撤回」。
+    const canRecallNow = !item.recalled
+      && item.sender === 'me'
+      && item.createdTs > 0
+      && (Date.now() - item.createdTs) <= RECALL_WINDOW_MS;
+
+    let actions;
+    if (item.sender !== 'me') {
+      actions = ['删除'];
+    } else if (canRecallNow) {
+      actions = ['撤回', '删除'];
+    } else {
+      actions = ['撤回（已超时）', '删除'];
+    }
 
     wx.showActionSheet({
       itemList: actions,
       success: (res) => {
         const label = actions[res.tapIndex];
-        if (label === '撤回') {
+
+        if (label.indexOf('撤回') === 0) {
+          if (!canRecallNow) {
+            this.showRecallExpired(item);
+            return;
+          }
           this.doRecall(item);
-        } else if (label === '删除') {
+          return;
+        }
+
+        if (label === '删除') {
           this.doDelete(item);
         }
       },
       fail: () => {}
+    });
+  },
+
+  // 超时提示：把「什么时候发的、为什么不行」说清楚，
+  // 而不是只留一个没有撤回项的菜单让人猜。
+  showRecallExpired(item) {
+    let content = '这条消息超过 2 分钟，不能撤回。';
+    if (item.createdTs) {
+      const minutes = Math.max(1, Math.floor((Date.now() - item.createdTs) / 60000));
+      content = `这条消息发送于 ${minutes} 分钟前，超过 2 分钟不能撤回。`;
+    }
+    wx.showModal({
+      title: '不能撤回',
+      content,
+      showCancel: false,
+      confirmText: '知道了'
     });
   },
 

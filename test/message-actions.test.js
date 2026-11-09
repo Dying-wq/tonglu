@@ -106,11 +106,21 @@ test('chat page wires long press to recall and delete', () => {
   assert.equal(js.includes('doRecall'), true, '聊天页没有撤回处理');
   assert.equal(js.includes('doDelete'), true, '聊天页没有删除处理');
 
-  // 撤回选项只在 2 分钟内出现，判断依据是 canRecall
+  // 撤回选项必须一直出现在菜单里，超时时改为「撤回（已超时）」并给出原因。
+  // 之前超时后直接不显示这一项，用户看到的是「删除有、撤回没有」，
+  // 会判断成功能没做，而不是「超过 2 分钟不能撤回」。
   assert.equal(
-    js.includes('canRecall'),
+    js.includes('撤回（已超时）'),
     true,
-    '聊天页没有按时间窗口决定是否显示「撤回」'
+    '超时后菜单里没有撤回项，用户会以为撤回功能没实现'
+  );
+
+  // 时限必须在长按时用当前时间重算，不能读渲染时算好的 canRecall：
+  // 页面开几分钟后那个值还是 true，会给出一个点了必然失败的「撤回」
+  assert.equal(
+    js.includes('canRecallNow'),
+    true,
+    '长按时没有按当前时间重新判断撤回时限'
   );
 });
 
