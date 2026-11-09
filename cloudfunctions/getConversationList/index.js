@@ -54,9 +54,22 @@ exports.main = async () => {
   // 这里在取回后过滤，而不是写进 where 的点路径条件：
   // 点路径在键名异常时会静默不生效，而删除会话是低频操作，
   // 100 条上限内做一次内存过滤的代价可以忽略。
+  //
+  // 同时清理一批历史脏数据：早期版本建会话时写了一条「…会话已创建」的
+  // 系统文案当 lastMessage，并给对方记了 1 条未读。这些记录没有 hasMessages
+  // 字段，上面的 exists(false) 兼容分支会把它们放进来，所以按文案特征再挡一次。
+  // 不做这一步的话，用户升级后旧的空会话仍然挂在列表里。
+  const LEGACY_PLACEHOLDER = /会话已创建/;
+
   const rows = (res.data || []).filter((item) => {
     const hiddenMap = item.hiddenMap || {};
-    return hiddenMap[openid] !== true;
+    if (hiddenMap[openid] === true) return false;
+
+    const isLegacyEmpty = item.hasMessages !== true
+      && LEGACY_PLACEHOLDER.test(item.lastMessage || '');
+    if (isLegacyEmpty) return false;
+
+    return true;
   });
   const peerIds = rows.map((item) => {
     const ids = item.participantIds || item.participantOpenids || [];

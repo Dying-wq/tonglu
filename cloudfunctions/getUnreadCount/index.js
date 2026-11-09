@@ -14,11 +14,16 @@ exports.main = async () => {
 
   // 可见性规则必须和 getConversationList 保持一致：
   // 1) 未开始的会话（hasMessages === false）不计入——那种会话在列表里根本不显示；
-  // 2) 用户左滑删除的会话（hiddenMap[我] === true）也不计入。
+  // 2) 用户左滑删除的会话（hiddenMap[我] === true）也不计入；
+  // 3) 早期版本留下的「只有系统文案」的空会话同样不计入，
+  //    它们给对方记过 1 条未读，不清掉的话角标会永远挂着一个点不到的红点。
   // 不一致的表现就是「角标写着 2 条未读，点进去一条都找不到」。
+  const LEGACY_PLACEHOLDER = /会话已创建/;
+
   const unreadCount = (res.data || []).reduce((sum, item) => {
     if (item.hasMessages === false) return sum;
     if ((item.hiddenMap || {})[openid] === true) return sum;
+    if (item.hasMessages !== true && LEGACY_PLACEHOLDER.test(item.lastMessage || '')) return sum;
     return sum + (Number(item.unreadMap && item.unreadMap[openid]) || 0);
   }, 0);
 
