@@ -83,10 +83,10 @@ exports.main = async (event = {}) => {
   // 帖子跟随发布者的行程：到站之后就不该继续出现在同车次旅客的首页上，
   // 否则有人会照着一条「人已经下车了」的帖子白跑一趟。
   // 到达时间取用户当前绑定的车次（bindTrain 写入 users.trainBinding.arrivalTs），
-  // 再加 2 小时宽限——刚下车时可能还在站台交接物品，立刻消失反而不合理。
+  // 再加 10 分钟宽限——留出下车、走到站台交接的时间就够了。
   // 没有绑定行程（arrivalTs 缺失）时不写这个字段，表示永不过期，
   // 这样历史帖子和未绑定场景都不会被误伤。
-  const EXPIRE_GRACE_MS = 2 * 60 * 60 * 1000;
+  const EXPIRE_GRACE_MS = 10 * 60 * 1000;
   const binding = user.trainBinding || {};
   const arrivalTs = Number(binding.arrivalTs) || 0;
   const expireAt = arrivalTs ? new Date(arrivalTs + EXPIRE_GRACE_MS) : null;
