@@ -58,10 +58,28 @@
 
 .meta,
 .publisher {
+  display: flex;
+  align-items: center;
   margin-top: 16rpx;
   color: #64748b;
   font-size: 26rpx;
 }
+
+
+.publisher-avatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: #1f6feb;
+  color: #fff;
+  font-size: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14rpx;
+  flex-shrink: 0;
+}
+
 
 .meta-item {
   margin-right: 20rpx;

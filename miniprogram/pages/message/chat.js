@@ -187,6 +187,17 @@ Page({
     });
   },
 
+
+  // 点头像/名字进对方只读主页
+  goProfile() {
+    if (!this.data.peerOpenid) return;
+    const query = [`openid=${encodeURIComponent(this.data.peerOpenid)}`];
+    if (this.data.conversationId) {
+      query.push(`conversationId=${encodeURIComponent(this.data.conversationId)}`);
+    }
+    wx.navigateTo({ url: `/pages/user/profile-view/profile-view?${query.join('&')}` });
+  },
+
   // 订单会话：不用退出聊天再回消息页找，直接进接受接单 / 确认完成
   goOrder() {
     const { orderId, conversationId } = this.data;
@@ -513,3 +524,4 @@ Page({
     });
   }
 });
+//（注：内容由AI生成）

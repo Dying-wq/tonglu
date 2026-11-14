@@ -219,6 +219,17 @@ Page({
     }
   },
 
+  // 点发布者进对方只读主页，带上 postId 供「发消息」建会话
+  goProfile() {
+    const post = this.data.post;
+    if (!post || !post.publisherOpenid) return;
+    const query = [
+      `openid=${encodeURIComponent(post.publisherOpenid)}`,
+      `postId=${encodeURIComponent(post.id)}`
+    ];
+    wx.navigateTo({ url: `/pages/user/profile-view/profile-view?${query.join('&')}` });
+  },
+
   goComplaint() {
     if (!this.data.post || !this.data.post.id) return;
     wx.navigateTo({
@@ -226,3 +237,4 @@ Page({
     });
   }
 });
+//（注：内容由AI生成）

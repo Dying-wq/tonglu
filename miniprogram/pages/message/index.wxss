@@ -137,6 +137,10 @@
   font-weight: 900;
 }
 
+.avatar-wrap {
+  margin-right: 20rpx;
+}
+
 .content {
   flex: 1;
   min-width: 0;

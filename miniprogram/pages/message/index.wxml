@@ -62,13 +62,16 @@
       bindtouchcancel="onTouchEnd"
       bindtap="goChat"
     >
-      <image
-        wx:if="{{item.avatarUrl}}"
-        class="avatar avatar-img"
-        src="{{item.avatarUrl}}"
-        mode="aspectFill"
-      />
-      <view wx:else class="avatar">{{item.avatarText}}</view>
+    <view class="avatar-wrap" catchtap="goProfile" data-openid="{{item.peerOpenid}}">
+  <image
+    wx:if="{{item.avatarUrl}}"
+    class="avatar avatar-img"
+    src="{{item.avatarUrl}}"
+    mode="aspectFill"
+  />
+  <view wx:else class="avatar">{{item.avatarText}}</view>
+</view>
+
       <view class="content">
         <view class="line">
           <view class="name">{{item.name}} <text class="rank">{{item.rankName}}</text></view>

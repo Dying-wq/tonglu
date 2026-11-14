@@ -1,0 +1,149 @@
+.page {
+  min-height: 100vh;
+  background: #eef2f7;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.header-card {
+  padding-top: 40rpx;
+}
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: #1f6feb;
+  color: #fff;
+  font-size: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-img {
+  background: #eef2f7;
+}
+
+.head-meta {
+  margin-left: 28rpx;
+  flex: 1;
+}
+
+.nickname {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.credit-line {
+  margin-top: 10rpx;
+  display: flex;
+  align-items: center;
+}
+
+.rank-tag {
+  background: #f0f7ff;
+  color: #1f6feb;
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  margin-right: 16rpx;
+}
+
+.credit-score {
+  font-size: 28rpx;
+  color: #475569;
+}
+
+.train-chip {
+  margin-top: 12rpx;
+  display: inline-block;
+  background: #ecfdf5;
+  color: #059669;
+  font-size: 24rpx;
+  padding: 6rpx 18rpx;
+  border-radius: 20rpx;
+}
+
+.stats-row {
+  display: flex;
+  margin-top: 36rpx;
+  border-top: 1rpx solid #eef2f7;
+  padding-top: 28rpx;
+}
+
+.stat {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #64748b;
+  margin-top: 8rpx;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.primary-btn {
+  background: #1f6feb;
+  color: #fff;
+  border-radius: 14rpx;
+  font-size: 32rpx;
+}
+
+.primary-btn.disabled {
+  background: #cbd5e1;
+}
+
+.warn-btn {
+  background: #fff;
+  color: #dc2626;
+  border: 1rpx solid #fecaca;
+  border-radius: 14rpx;
+  font-size: 32rpx;
+}
+
+.plain-btn {
+  background: #fff;
+  color: #475569;
+  border: 1rpx solid #e2e8f0;
+  border-radius: 14rpx;
+  font-size: 32rpx;
+}
+
+.hint {
+  text-align: center;
+  font-size: 24rpx;
+  color: #94a3b8;
+  margin-top: 12rpx;
+}
+
+.muted {
+  color: #64748b;
+  text-align: center;
+}

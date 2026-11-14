@@ -276,6 +276,16 @@ Page({
     });
   },
 
+
+  // 点头像进对方只读主页，catchtap 已阻止冒泡，不会同时进聊天页
+  goProfile(event) {
+    const { openid } = event.currentTarget.dataset;
+    if (!openid) return;
+    wx.navigateTo({
+      url: `/pages/user/profile-view/profile-view?openid=${encodeURIComponent(openid)}`
+    });
+  },
+
   // 订单会话的显式入口：过去只能从会话里猜路径，发布者找不到
   // 「接受接单 / 确认完成」在哪里。catchtap 阻止冒泡到卡片的 goChat。
   goOrder(event) {
@@ -295,3 +305,4 @@ Page({
     });
   }
 });
+//（注：内容由AI生成）

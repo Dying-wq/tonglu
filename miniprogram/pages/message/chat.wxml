@@ -2,24 +2,24 @@
   <!-- 顶部显示「正在和谁聊」。这里必须是对方的信息：
        之前会话列表用的是建会话时写死的发布者昵称，
        发布者本人打开会看到自己的名字，头像同理。 -->
-  <view class="peer-bar">
-    <image
-      wx:if="{{peerAvatarUrl}}"
-      class="peer-avatar peer-avatar-img"
-      src="{{peerAvatarUrl}}"
-      mode="aspectFill"
-    />
-    <view wx:else class="peer-avatar">{{peerAvatarText || '旅'}}</view>
-    <view class="peer-meta">
-      <view class="peer-name">
-        {{peerName || '同车旅客'}}
-        <text wx:if="{{blocked}}" class="peer-blocked-tag">{{blockedByMe ? '已拉黑' : '被拉黑'}}</text>
-      </view>
-      <view class="peer-sub" bindtap="goPost">
-        {{post ? post.title + ' · ' + post.location : '同路微光会话'}}
-      </view>
+  <view class="peer-bar" bindtap="goProfile" data-openid="{{peerOpenid}}">
+  <image
+    wx:if="{{peerAvatarUrl}}"
+    class="peer-avatar peer-avatar-img"
+    src="{{peerAvatarUrl}}"
+    mode="aspectFill"
+  />
+  <view wx:else class="peer-avatar">{{peerAvatarText || '旅'}}</view>
+  <view class="peer-meta">
+    <view class="peer-name">
+      {{peerName || '同车旅客'}}
+      <text wx:if="{{blocked}}" class="peer-blocked-tag">{{blockedByMe ? '已拉黑' : '被拉黑'}}</text>
+    </view>
+    <view class="peer-sub" bindtap="goPost">
+      {{post ? post.title + ' · ' + post.location : '同路微光会话'}}
     </view>
   </view>
+</view>
 
   <view wx:if="{{deployHint}}" class="deploy-hint">{{deployHint}}</view>
 

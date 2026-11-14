@@ -13,6 +13,7 @@
     "pages/review/review",
     "pages/admin/admin",
     "pages/profile-edit/profile-edit",
+    "pages/user/profile-view/profile-view",
     "pages/user/notification-settings",
     "pages/user/blocked-users/blocked-users",
     "pages/search/search",

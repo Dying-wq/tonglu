@@ -1,0 +1,46 @@
+<view class="page" wx:if="{{!loading && profile}}">
+  <view class="card header-card">
+    <view class="avatar-row">
+      <image wx:if="{{profile.avatarUrl}}" class="avatar avatar-img" src="{{profile.avatarUrl}}" mode="aspectFill" />
+      <view wx:else class="avatar">{{profile.avatarText}}</view>
+      <view class="head-meta">
+        <view class="nickname">{{profile.nickname}}</view>
+        <view class="credit-line">
+          <text class="rank-tag">{{profile.creditLevelName}}</text>
+          <text class="credit-score">信用 {{profile.creditScore}} 分</text>
+        </view>
+        <view wx:if="{{profile.sameTrain}}" class="train-chip">同车 · {{profile.targetTrainNo}}</view>
+      </view>
+    </view>
+
+    <view class="stats-row">
+      <view class="stat" bindtap="goThankWall">
+        <view class="stat-num">{{profile.helpCount}}</view>
+        <view class="stat-label">帮过几次</view>
+      </view>
+      <view class="stat" bindtap="goThankWall">
+        <view class="stat-num">{{profile.thankCount}}</view>
+        <view class="stat-label">收到感谢</view>
+      </view>
+      <view class="stat">
+        <view class="stat-num">{{joinedDays}}</view>
+        <view class="stat-label">加入天数</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card actions">
+    <button class="primary-btn {{canMessage ? '' : 'disabled'}}" bindtap="goMessage">发消息</button>
+    <button class="warn-btn" bindtap="goBlock" wx:if="{{!blockedByMe}}">拉黑</button>
+    <button class="plain-btn" bindtap="goReport">举报</button>
+  </view>
+
+  <view class="hint">该主页为只读，仅展示互助相关信息</view>
+</view>
+
+<view class="page" wx:elif="{{loading}}">
+  <view class="card muted">加载中…</view>
+</view>
+<view class="page" wx:else>
+  <view class="card muted">暂时无法查看该用户</view>
+</view>

@@ -870,6 +870,12 @@ function formatTime(ts) {
   return Math.floor(diff / 86400000) + ' 天前';
 }
 
+async function getUserProfile(targetOpenid) {
+  if (!targetOpenid || !getCloudReady()) return null;
+  const res = await callFunction('getUserProfile', { targetOpenid });
+  return res.result;
+}
+
 module.exports = {
   login,
   ensureLogin,
@@ -924,5 +930,7 @@ module.exports = {
   parseDateValue,
   getThankWall,
   getAdminDashboard,
+  getUserProfile,
   adminUpdateStatus
 };
+//（注：内容由AI生成）
