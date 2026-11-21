@@ -5,7 +5,9 @@
 
   <view wx:for="{{complaints}}" wx:key="_id" class="complaint-card">
     <view class="reason-line">{{item.reason}}</view>
-    <view class="content">{{item.content}}</view>
+    <view class="parties">{{item.complainantName}} 举报 {{item.targetName}}</view>
+    <view class="content" wx:if="{{item.content}}">{{item.content}}</view>
+    <view class="content muted-content" wx:else>举报人未填写文字说明</view>
     <view class="meta">关联：{{item.relatedType}} / {{item.relatedId}}</view>
     <view class="actions">
       <button class="reject" data-id="{{item._id}}" bindtap="reject">驳回</button>

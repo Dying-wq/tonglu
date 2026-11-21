@@ -822,8 +822,21 @@ async function getComplaints() {
       return [];
     }
     const list = (result.data && result.data.complaints) || [];
+    // 管理后台同一次请求已经带回用户列表，直接用于把 openid 换成昵称，
+    // 否则审核页只有一串 openid，管理员根本判断不了是谁举报了谁。
+    const users = (result.data && result.data.users) || [];
+    const nameMap = {};
+    users.forEach((user) => {
+      if (user.openid) nameMap[user.openid] = user.nickname || '未命名用户';
+    });
     // reports 是旧举报入口的遗留数据，没有扣分对象，不进审核列表
-    return list.filter((item) => item.status === 'pending' && item.adminCollection !== 'reports');
+    return list
+      .filter((item) => item.status === 'pending' && item.adminCollection !== 'reports')
+      .map((item) => ({
+        ...item,
+        complainantName: nameMap[item.complainantOpenid] || nameMap[item.reporterOpenid] || '未知用户',
+        targetName: nameMap[item.targetUserOpenid] || nameMap[item.targetOpenid] || '未知用户'
+      }));
   } catch (error) {
     console.warn('读取投诉列表失败：', error);
     return [];
