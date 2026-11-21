@@ -113,6 +113,13 @@ Page({
       title: '已确认完成',
       icon: 'none'
     });
+    if (result.earnedBadges && result.earnedBadges.length) {
+      wx.showModal({
+        title: '获得新徽章',
+        content: `帮助者获得「${result.earnedBadges.join('、')}」`,
+        showCancel: false
+      });
+    }
     this.loadOrder(this.data.order.id);
   },
 

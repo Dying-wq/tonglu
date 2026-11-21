@@ -28,10 +28,17 @@ Page({
       decision,
       adminNote: decision === 'approve' ? '投诉成立，扣除信用分。' : '证据不足，驳回投诉。'
     });
-    wx.showToast({
-      title: result && result.ok ? '处理完成' : '已本地处理',
-      icon: 'none'
-    });
+    let title = '处理完成';
+    if (!result) {
+      title = '处理失败，请稍后重试';
+    } else if (!result.ok) {
+      title = result.code === 'NOT_ADMIN' ? '没有管理员权限' : (result.message || '处理失败');
+    } else if (result.alreadyReviewed) {
+      title = '该投诉已处理过';
+    } else if (result.autoBanned) {
+      title = '投诉成立，已临时封禁 24 小时';
+    }
+    wx.showToast({ title, icon: 'none' });
     this.loadComplaints();
   }
 });

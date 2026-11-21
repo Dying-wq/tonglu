@@ -18,6 +18,26 @@ function getCreditLevelName(score) {
   return '已封禁';
 }
 
+// 与 miniprogram/utils/constants.js 的 BADGES 保持一致
+const BADGE_RULES = [
+  { key: 'first_help', name: '热心旅客', minHelp: 1 },
+  { key: 'pioneer', name: '同路先锋', minHelp: 3 },
+  { key: 'light_bearer', name: '微光使者', minHelp: 10 }
+];
+
+// 把达成的新徽章合并进 users.badges，并返回本次新获得的徽章名
+function mergeHelpBadges(existing, helpCount) {
+  const badges = Array.isArray(existing) ? existing.slice() : [];
+  const earned = [];
+  BADGE_RULES.forEach((rule) => {
+    if (helpCount >= rule.minHelp && !badges.includes(rule.key)) {
+      badges.push(rule.key);
+      earned.push(rule.name);
+    }
+  });
+  return { badges, earned };
+}
+
 async function findUser(openid) {
   if (!openid) return null;
   const res = await db.collection('users').where({ openid }).limit(1).get();
@@ -102,6 +122,9 @@ exports.main = async (event = {}) => {
   const publisher = await findUser(order.publisherOpenid);
   const currentScore = Number(taker && taker.creditScore) || 0;
   const nextScore = currentScore + HELP_COMPLETED_SCORE;
+  // 徽章按累计帮助次数判定，写入用户记录后个人主页直接读，不再只靠前端算
+  const nextHelpCount = (Number(taker && taker.helpCount) || 0) + 1;
+  const badgeResult = mergeHelpBadges(taker && taker.badges, nextHelpCount);
 
   if (order.takerOpenid) {
     await db.collection('users').where({ openid: order.takerOpenid }).update({
@@ -111,6 +134,7 @@ exports.main = async (event = {}) => {
         helpCount: _.inc(1),
         thankCount: _.inc(1),
         monthlyCompletedCount: _.inc(1),
+        badges: badgeResult.badges,
         lastCompletedAt: db.serverDate(),
         updatedAt: db.serverDate()
       }
@@ -134,6 +158,7 @@ exports.main = async (event = {}) => {
     ok: true,
     action: 'confirmComplete',
     orderStatus: 'completed',
-    creditChange: HELP_COMPLETED_SCORE
+    creditChange: HELP_COMPLETED_SCORE,
+    earnedBadges: badgeResult.earned
   };
 };

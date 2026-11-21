@@ -128,15 +128,19 @@ function getEarnedBadges(user) {
   const helpCount = Number(user.helpCount) || 0;
   const topicCount = Number(user.topicCount) || 0;
 
-  return BADGES.filter((badge) => {
-    if (badge.condition.helpCount !== undefined) {
-      return helpCount >= badge.condition.helpCount;
+  // 以云函数写入的 badges 记录为准，同时按计数补充：
+  // 老用户没有 badges 字段，或功能上线前就已达标的用户，不会漏显示徽章。
+  const keys = new Set(Array.isArray(user.badges) ? user.badges : []);
+  BADGES.forEach((badge) => {
+    if (badge.condition.helpCount !== undefined && helpCount >= badge.condition.helpCount) {
+      keys.add(badge.key);
     }
-    if (badge.condition.topicCount !== undefined) {
-      return topicCount >= badge.condition.topicCount;
+    if (badge.condition.topicCount !== undefined && topicCount >= badge.condition.topicCount) {
+      keys.add(badge.key);
     }
-    return false;
   });
+
+  return BADGES.filter((badge) => keys.has(badge.key));
 }
 
 function getLatestBadge(user) {

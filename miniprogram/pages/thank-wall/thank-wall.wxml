@@ -5,6 +5,25 @@
     <view class="hero-desc">每一份善意都值得被看见</view>
   </view>
 
+  <view class="wall-actions">
+    <button class="write-btn" bindtap="toggleForm">{{showForm ? '收起' : '写下感谢'}}</button>
+  </view>
+
+  <view wx:if="{{showForm}}" class="thank-form">
+    <view class="form-label">选择一条已完成的互助</view>
+    <picker mode="selector" range="{{orderLabels}}" value="{{orderIndex}}" bindchange="selectOrder">
+      <view class="picker-box">{{orderIndex >= 0 ? orderLabels[orderIndex] : '请选择订单'}}</view>
+    </picker>
+    <textarea
+      class="thank-input"
+      maxlength="60"
+      placeholder="写一句感谢帮助者的话"
+      value="{{content}}"
+      bindinput="updateContent"
+    />
+    <button class="submit-btn" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">发布到感谢墙</button>
+  </view>
+
   <view wx:if="{{loading}}" class="loading-tip">加载中...</view>
 
   <view wx:elif="{{thankList.length === 0}}" class="empty-state">
@@ -26,6 +45,6 @@
   </view>
 
   <view class="wall-footer">
-    <view class="footer-text">仅展示最近10条公开感谢，昵称已匿名化处理</view>
+    <view class="footer-text">仅展示最近10条公开感谢</view>
   </view>
 </view>

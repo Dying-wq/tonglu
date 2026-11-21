@@ -20,6 +20,14 @@ function detectRisk(text) {
   return RISK_WORDS.filter((word) => String(text || '').includes(word));
 }
 
+// 被 3 人同理由举报核实后写入的临时封禁，到期自动失效
+function isBanned(user) {
+  const until = user && user.bannedUntil;
+  if (!until) return false;
+  const ts = until instanceof Date ? until.getTime() : new Date(until).getTime();
+  return Number.isFinite(ts) && ts > Date.now();
+}
+
 // 微信内容安全接口：未开通或无权限时返回 true，降级为本地词库校验
 async function checkContentSecurity(content, openid) {
   try {
@@ -69,6 +77,14 @@ exports.main = async (event = {}) => {
 
   const userRes = await db.collection('users').where({ openid }).limit(1).get();
   const user = userRes.data[0] || {};
+
+  if (isBanned(user)) {
+    return {
+      ok: false,
+      code: 'USER_BANNED',
+      message: '因多次被举报并核实，账号已被临时限制发布，24 小时后自动解除。'
+    };
+  }
 
   // 信用分检查：< 40分不能发布
   const creditScore = user.creditScore || 60;
@@ -122,11 +138,17 @@ exports.main = async (event = {}) => {
 
   const result = await db.collection('posts').add({ data: post });
 
-  // 如果是话题打卡，增加用户 topicCount
+  // 如果是话题打卡，增加用户 topicCount 并补发「旅途记录者」徽章
   if (event.type === 'topic') {
+    const nextTopicCount = (Number(user.topicCount) || 0) + 1;
+    const badges = Array.isArray(user.badges) ? user.badges.slice() : [];
+    if (nextTopicCount >= 1 && !badges.includes('topic_record')) {
+      badges.push('topic_record');
+    }
     await db.collection('users').where({ openid }).update({
       data: {
         topicCount: _.inc(1),
+        badges,
         updatedAt: db.serverDate()
       }
     });

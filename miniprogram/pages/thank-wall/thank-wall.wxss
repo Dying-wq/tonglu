@@ -35,6 +35,68 @@
   color: #6b7280;
 }
 
+.wall-actions {
+  padding: 0 24rpx 20rpx;
+}
+
+.write-btn {
+  margin: 0;
+  padding: 20rpx 0;
+  border-radius: 12rpx;
+  background: linear-gradient(135deg, #f2994a, #f2c94c);
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  border: none;
+}
+
+.thank-form {
+  margin: 0 24rpx 20rpx;
+  padding: 24rpx;
+  border-radius: 12rpx;
+  background: #ffffff;
+  border: 1rpx solid #edf1f6;
+}
+
+.form-label {
+  font-size: 26rpx;
+  color: #6b7280;
+  margin-bottom: 12rpx;
+}
+
+.picker-box {
+  padding: 20rpx;
+  border-radius: 10rpx;
+  background: #f5f7fb;
+  font-size: 28rpx;
+  color: #111827;
+}
+
+.thank-input {
+  width: 100%;
+  height: 140rpx;
+  margin-top: 16rpx;
+  padding: 20rpx;
+  box-sizing: border-box;
+  border-radius: 10rpx;
+  background: #f5f7fb;
+  font-size: 28rpx;
+  color: #111827;
+}
+
+.submit-btn {
+  margin-top: 16rpx;
+  padding: 20rpx 0;
+  border-radius: 10rpx;
+  background: #1f6feb;
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  border: none;
+}
+
 .loading-tip {
   text-align: center;
   padding: 60rpx 0;

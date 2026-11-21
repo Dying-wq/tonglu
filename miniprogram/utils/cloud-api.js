@@ -730,6 +730,11 @@ async function getThankWall() {
 // ====================================================================
 // 举报与投诉
 // ====================================================================
+async function createThank(payload = {}) {
+  const res = await callFunction('createThank', payload);
+  return res.result;
+}
+
 async function requestWechatExchange(conversationId) {
   const res = await callFunction('requestWechatExchange', { conversationId });
   return res.result;
@@ -806,15 +811,21 @@ async function getComplaints() {
     }];
   }
 
+  // 走云函数而不是前端直查：
+  // complaints 是「仅创建者可读写」，管理员直查只能读到自己的记录，
+  // 而放开成「所有用户可读」会把别人的投诉内容暴露给所有用户。
   try {
-    const db = wx.cloud.database();
-    const res = await db.collection('complaints')
-      .where({ status: 'pending' })
-      .orderBy('createdAt', 'desc')
-      .get();
-    return res.data;
+    const res = await callFunction('getAdminDashboard');
+    const result = res.result || {};
+    if (!result.ok) {
+      console.warn('读取投诉列表失败：', result);
+      return [];
+    }
+    const list = (result.data && result.data.complaints) || [];
+    // reports 是旧举报入口的遗留数据，没有扣分对象，不进审核列表
+    return list.filter((item) => item.status === 'pending' && item.adminCollection !== 'reports');
   } catch (error) {
-    console.warn('读取 complaints 集合失败：', error);
+    console.warn('读取投诉列表失败：', error);
     return [];
   }
 }
@@ -929,6 +940,7 @@ module.exports = {
   formatTime,
   parseDateValue,
   getThankWall,
+  createThank,
   getAdminDashboard,
   getUserProfile,
   adminUpdateStatus

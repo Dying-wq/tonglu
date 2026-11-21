@@ -17,6 +17,14 @@ function detectRisk(content) {
   };
 }
 
+// 被 3 人同理由举报核实后写入的临时封禁，到期自动失效
+function isBanned(user) {
+  const until = user && user.bannedUntil;
+  if (!until) return false;
+  const ts = until instanceof Date ? until.getTime() : new Date(until).getTime();
+  return Number.isFinite(ts) && ts > Date.now();
+}
+
 exports.main = async (event = {}) => {
   if (!event.conversationId || !event.content) {
     return {
@@ -72,6 +80,21 @@ exports.main = async (event = {}) => {
       // blocks 集合不存在或查询失败时按「无拉黑记录」放行，
       // 不能让拉黑名单的故障连带把正常聊天也堵死。
     }
+  }
+
+  // 临时封禁检查：被 3 人同理由举报核实后 24 小时内不能发消息。
+  // 查询失败时放行，不能让用户表的故障连带堵死正常聊天。
+  try {
+    const userRes = await db.collection('users').where({ openid: wxContext.OPENID }).limit(1).get();
+    if (isBanned(userRes.data[0])) {
+      return {
+        ok: false,
+        code: 'USER_BANNED',
+        message: '因多次被举报并核实，账号已被临时限制发送消息，24 小时后自动解除。'
+      };
+    }
+  } catch (error) {
+    // 忽略，继续发送
   }
 
   const receiverIds = participantIds.filter((id) => id !== wxContext.OPENID);
