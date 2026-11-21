@@ -16,6 +16,25 @@ exports.main = async (event = {}) => {
   }
 
   const wxContext = cloud.getWXContext();
+
+  // 同一用户对同一对象只保留一条待处理举报：
+  // 重复提交会让管理员重复「成立并扣分」，被举报人被重复扣分
+  const duplicate = await db.collection('complaints').where({
+    complainantOpenid: wxContext.OPENID,
+    relatedId: event.relatedId,
+    status: 'pending'
+  }).limit(1).get();
+  if (duplicate.data.length) {
+    return {
+      ok: true,
+      duplicate: true,
+      action: 'createComplaint',
+      complaintId: duplicate.data[0]._id,
+      status: 'pending',
+      message: '你已提交过该举报，正在等待管理员处理。'
+    };
+  }
+
   const complaint = {
     relatedId: event.relatedId,
     relatedType: event.relatedType || 'order',

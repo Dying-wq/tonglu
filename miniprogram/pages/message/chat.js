@@ -8,7 +8,6 @@ const {
   login,
   markConversationRead,
   recallMessage: recallMessageApi,
-  reportConversationOrMessage,
   requestWechatExchange,
   sendMessage,
   unblockUser: unblockUserApi
@@ -416,15 +415,25 @@ Page({
     });
   },
 
-  async reportConversation() {
-    const result = await reportConversationOrMessage({
-      conversationId: this.data.conversationId,
-      targetType: 'conversation',
-      reason: '聊天内容违规'
-    });
-    wx.showToast({
-      title: result && result.ok ? '已提交举报' : '举报未提交成功',
-      icon: 'none'
+  // 举报不再一键提交：带上会话与被举报人跳到举报表单页，
+  // 由用户选择举报理由并填写说明，避免审核页只能看到一句固定文案
+  reportConversation() {
+    if (!this.data.conversationId) {
+      wx.showToast({ title: '会话未建立，暂时无法举报', icon: 'none' });
+      return;
+    }
+    const query = [
+      'relatedType=conversation',
+      `relatedId=${encodeURIComponent(this.data.conversationId)}`
+    ];
+    if (this.data.peerOpenid) {
+      query.push(`targetUserOpenid=${encodeURIComponent(this.data.peerOpenid)}`);
+    }
+    if (this.data.peerName) {
+      query.push(`targetUserName=${encodeURIComponent(this.data.peerName)}`);
+    }
+    wx.navigateTo({
+      url: `/pages/complaint-submit/complaint-submit?${query.join('&')}`
     });
   },
 
